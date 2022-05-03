@@ -57,8 +57,8 @@ void SettingDialog::scroll(int bar, WPARAM wParam)
 	case SB_RIGHT:     si.nPos = si.nMax; break;
 	case SB_LINELEFT:  si.nPos += -10; break;
 	case SB_LINERIGHT: si.nPos +=  10; break;
-	case SB_PAGELEFT:  si.nPos += -40; break;
-	case SB_PAGERIGHT: si.nPos +=  40; break;
+	case SB_PAGELEFT:  si.nPos += -60; break;
+	case SB_PAGERIGHT: si.nPos +=  60; break;
 	case SB_THUMBTRACK:
 	case SB_THUMBPOSITION: si.nPos = HIWORD(wParam); break;
 	}
@@ -125,6 +125,15 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 
 			break;
 		}
+	case WM_MOUSEWHEEL:
+		{
+			MY_TRACE(_T("SettingDialog::containerWndProc(WM_MOUSEWHEEL, %d)\n"), wParam);
+
+			g_settingDialog.scroll(SB_VERT, ((int)wParam > 0) ? SB_PAGEUP : SB_PAGEDOWN);
+			g_settingDialog.recalcLayout();
+
+			break;
+		}
 	}
 
 	return ::DefWindowProc(hwnd, message, wParam, lParam);
@@ -141,6 +150,28 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 			g_settingDialog.updateScrollBar();
 			g_settingDialog.recalcLayout();
 			::InvalidateRect(g_settingDialog.m_hwndContainer, 0, FALSE);
+
+			break;
+		}
+	case WM_HSCROLL:
+		{
+			MY_TRACE(_T("SettingDialogProc(WM_HSCROLL, 0x%08X, 0x%08X)\n"), wParam, lParam);
+
+			WORD lo = LOWORD(wParam);
+			WORD hi = HIWORD(wParam);
+
+			// 設定ダイアログが SB_THUMBPOSITION に反応しないので SB_THUMBTRACK に変換する。
+			if (lo == SB_THUMBPOSITION)
+				wParam = MAKEWPARAM(SB_THUMBTRACK, hi);
+
+			break;
+		}
+	case WM_MOUSEWHEEL:
+		{
+			MY_TRACE(_T("SettingDialogProc(WM_MOUSEWHEEL, %d)\n"), wParam);
+
+			g_settingDialog.scroll(SB_VERT, ((int)wParam > 0) ? SB_PAGEUP : SB_PAGEDOWN);
+			g_settingDialog.recalcLayout();
 
 			break;
 		}
