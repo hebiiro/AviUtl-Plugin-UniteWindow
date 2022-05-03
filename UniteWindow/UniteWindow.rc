@@ -1,0 +1,131 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 日本語 (日本) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+#pragma code_page(932)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CONFIG DIALOGEX 0, 0, 219, 163
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "UniteWindowの設定"
+FONT 11, "MS UI Gothic", 400, 0, 0x80
+BEGIN
+    LTEXT           "レイアウトモード : ",IDC_STATIC,4,4,52,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    COMBOBOX        IDC_LAYOUT_MODE,56,4,60,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "ウィンドウの配置",IDC_STATIC,4,20,212,48
+    LTEXT           "左上 : ",IDC_STATIC,8,32,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    COMBOBOX        IDC_WINDOW_TOP_LEFT,36,32,72,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "右上 : ",IDC_STATIC,108,32,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    COMBOBOX        IDC_WINDOW_TOP_RIGHT,136,32,72,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "左下 : ",IDC_STATIC,8,48,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    COMBOBOX        IDC_WINDOW_BOTTOM_LEFT,36,48,72,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "右下 : ",IDC_STATIC,108,48,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    COMBOBOX        IDC_WINDOW_BOTTOM_RIGHT,136,48,72,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "ボーダーの位置 (垂直分割)",IDC_STATIC,4,72,212,32
+    LTEXT           "中央 : ",IDC_STATIC,12,84,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_VERT_CENTER,40,84,36,12,ES_AUTOHSCROLL
+    LTEXT           "左 : ",IDC_STATIC,76,84,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_LEFT,104,84,36,12,ES_AUTOHSCROLL
+    LTEXT           "右 : ",IDC_STATIC,140,84,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_RIGHT,168,84,36,12,ES_AUTOHSCROLL
+    GROUPBOX        "ボーダーの位置 (水平分割)",IDC_STATIC,4,108,212,32
+    LTEXT           "中央 : ",IDC_STATIC,12,120,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_HORZ_CENTER,40,120,36,12,ES_AUTOHSCROLL
+    LTEXT           "上 : ",IDC_STATIC,76,120,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_TOP,104,120,36,12,ES_AUTOHSCROLL
+    LTEXT           "下 : ",IDC_STATIC,140,120,28,12,SS_CENTERIMAGE,WS_EX_RIGHT
+    EDITTEXT        IDC_BORDER_BOTTOM,168,120,36,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,116,144,48,12
+    PUSHBUTTON      "キャンセル",IDCANCEL,168,144,48,12
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_CONFIG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 212
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CONFIG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // 日本語 (日本) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

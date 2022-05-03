@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="UniteWindow.h" />
+    <ClInclude Include="..\..\Common\AviUtlInternal.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Hook.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\MSXML.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Profile.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\Tracer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="..\..\Common\Dialog.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="UniteWindow.cpp" />
+    <ClCompile Include="UniteWindow_Window.cpp" />
+    <ClCompile Include="UniteWindow_Config_Load.cpp" />
+    <ClCompile Include="UniteWindow_Config_Save.cpp" />
+    <ClCompile Include="UniteWindow_Window_AviUtlWindow.cpp" />
+    <ClCompile Include="UniteWindow_Window_ExeditWindow.cpp" />
+    <ClCompile Include="UniteWindow_Window_SettingDialog.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="UniteWindow.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{177f322b-85e3-40d8-98e7-bca29a16eb22}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="UniteWindow.rc" />
+  </ItemGroup>
+</Project>
