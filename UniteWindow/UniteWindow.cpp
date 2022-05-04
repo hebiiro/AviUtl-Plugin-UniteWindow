@@ -937,7 +937,7 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 
 		true_SettingDialogProc = g_auin.HookSettingDialogProc(hook_SettingDialogProc);
 		MY_TRACE_HEX(true_SettingDialogProc);
-		MY_TRACE_HEX(hook_SettingDialogProc);
+		MY_TRACE_HEX(&hook_SettingDialogProc);
 
 		g_exeditWindow.init(hwnd);
 	}
