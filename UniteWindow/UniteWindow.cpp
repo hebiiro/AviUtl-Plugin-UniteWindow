@@ -57,6 +57,7 @@ void initHook()
 	DetourUpdateThread(::GetCurrentThread());
 
 	ATTACH_HOOK_PROC(CreateWindowExA);
+	ATTACH_HOOK_PROC(FindWindowExA);
 	ATTACH_HOOK_PROC(FindWindowW);
 
 	if (DetourTransactionCommit() == NO_ERROR)
@@ -947,6 +948,16 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 	}
 
 	return hwnd;
+}
+
+IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, LPCSTR className, LPCSTR windowName))
+{
+	MY_TRACE(_T("FindWindowExA(0x%08X, 0x%08X, %hs, %hs)\n"), parent, childAfter, className, windowName);
+
+	if (!parent && className && ::lstrcmpiA(className, "ExtendedFilterClass") == 0)
+		return g_settingDialog.m_hwnd;
+
+	return true_FindWindowExA(parent, childAfter, className, windowName);
 }
 
 IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windowName))

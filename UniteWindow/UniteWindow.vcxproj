@@ -105,7 +105,7 @@
       <AdditionalLibraryDirectories>../../</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test\Plugins\$(TargetName).aul"</Command>
+      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test_psd\Plugins\$(TargetName).aul"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -131,7 +131,7 @@
       <AdditionalLibraryDirectories>../../</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test\Plugins\$(TargetName).aul"</Command>
+      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test_psd\Plugins\$(TargetName).aul"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -153,7 +153,7 @@
       <AdditionalLibraryDirectories>../../</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test\Plugins\$(TargetName).aul"</Command>
+      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test_psd\Plugins\$(TargetName).aul"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -179,7 +179,7 @@
       <AdditionalLibraryDirectories>../../</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test\Plugins\$(TargetName).aul"</Command>
+      <Command>copy /B /Y "$(TargetDir)$(TargetFileName)" "C:\AviUtl110_test_psd\Plugins\$(TargetName).aul"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
