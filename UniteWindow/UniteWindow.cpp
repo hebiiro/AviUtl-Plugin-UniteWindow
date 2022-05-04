@@ -59,6 +59,8 @@ void initHook()
 	ATTACH_HOOK_PROC(CreateWindowExA);
 	ATTACH_HOOK_PROC(FindWindowExA);
 	ATTACH_HOOK_PROC(FindWindowW);
+	ATTACH_HOOK_PROC(GetWindow);
+	ATTACH_HOOK_PROC(EnumThreadWindows);
 
 	if (DetourTransactionCommit() == NO_ERROR)
 	{
@@ -968,6 +970,31 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windo
 		return g_settingDialog.m_hwnd;
 
 	return true_FindWindowW(className, windowName);
+}
+
+IMPLEMENT_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd))
+{
+	MY_TRACE(_T("GetWindow(0x%08X, %d)\n"), hwnd, cmd);
+	MY_TRACE_HWND(hwnd);
+
+	if (hwnd == g_settingDialog.m_hwnd && cmd == GW_OWNER)
+		return g_exeditWindow.m_hwnd;
+
+	return true_GetWindow(hwnd, cmd);
+}
+
+IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumThreadWindows, (DWORD threadId, WNDENUMPROC enumProc, LPARAM lParam))
+{
+	MY_TRACE(_T("EnumThreadWindows(%d, 0x%08X, 0x%08X)\n"), threadId, enumProc, lParam);
+
+	if (threadId == ::GetCurrentThreadId() && enumProc && lParam)
+	{
+		// enumProc() の中で ::GetWindow() が呼ばれる。
+		if (!enumProc(g_settingDialog.m_hwnd, lParam))
+			return FALSE;
+	}
+
+	return true_EnumThreadWindows(threadId, enumProc, lParam);
 }
 
 //---------------------------------------------------------------------
