@@ -153,6 +153,7 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 
 			break;
 		}
+#if 0
 	case WM_HSCROLL:
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_HSCROLL, 0x%08X, 0x%08X)\n"), wParam, lParam);
@@ -160,12 +161,13 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 			WORD lo = LOWORD(wParam);
 			WORD hi = HIWORD(wParam);
 
-			// 設定ダイアログが SB_THUMBPOSITION に反応しないので SB_THUMBTRACK に変換する。
+			// 設定ダイアログが SB_THUMBPOSITION に反応しない場合があるので SB_THUMBTRACK も送る。
 			if (lo == SB_THUMBPOSITION)
-				wParam = MAKEWPARAM(SB_THUMBTRACK, hi);
+				::SendMessage(hwnd, message, MAKEWPARAM(SB_THUMBTRACK, hi), lParam);
 
 			break;
 		}
+#endif
 	case WM_MOUSEWHEEL:
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_MOUSEWHEEL, %d)\n"), wParam);
