@@ -144,5 +144,6 @@ DECLARE_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, LP
 DECLARE_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windowName));
 DECLARE_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd));
 DECLARE_HOOK_PROC(BOOL, WINAPI, EnumThreadWindows, (DWORD threadId, WNDENUMPROC enumProc, LPARAM lParam));
+DECLARE_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lParam));
 
 //---------------------------------------------------------------------

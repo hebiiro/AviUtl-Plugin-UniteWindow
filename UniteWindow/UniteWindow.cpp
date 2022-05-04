@@ -61,6 +61,7 @@ void initHook()
 	ATTACH_HOOK_PROC(FindWindowW);
 	ATTACH_HOOK_PROC(GetWindow);
 	ATTACH_HOOK_PROC(EnumThreadWindows);
+	ATTACH_HOOK_PROC(EnumWindows);
 
 	if (DetourTransactionCommit() == NO_ERROR)
 	{
@@ -995,6 +996,19 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumThreadWindows, (DWORD threadId, WNDENUMPRO
 	}
 
 	return true_EnumThreadWindows(threadId, enumProc, lParam);
+}
+
+IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lParam))
+{
+	MY_TRACE(_T("EnumWindows(0x%08X, 0x%08X)\n"), enumProc, lParam);
+
+	if (enumProc && lParam)
+	{
+		if (!enumProc(g_aviutlWindow.m_hwnd, lParam))
+			return FALSE;
+	}
+
+	return true_EnumWindows(enumProc, lParam);
 }
 
 //---------------------------------------------------------------------
