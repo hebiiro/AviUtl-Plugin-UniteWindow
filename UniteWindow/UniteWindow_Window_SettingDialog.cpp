@@ -153,6 +153,15 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 {
 	switch (message)
 	{
+	case WM_ACTIVATE:
+		{
+			MY_TRACE(_T("SettingDialogProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
+
+			if (LOWORD(wParam) == WA_CLICKACTIVE)
+				::SetForegroundWindow(g_singleWindow);
+
+			break;
+		}
 	case WM_GETMINMAXINFO:
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_GETMINMAXINFO)\n"));

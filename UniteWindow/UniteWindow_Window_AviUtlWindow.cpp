@@ -90,6 +90,13 @@ LRESULT CALLBACK aviutlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			MY_TRACE(_T("aviutlWindowProc(WM_NCACTIVATE, %d, 0x%08X)\n"), wParam, lParam);
 
 			return ::DefWindowProc(hwnd, message, TRUE, 0);
+		}
+	case WM_ACTIVATE:
+		{
+			MY_TRACE(_T("aviutlWindowProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
+
+			if (LOWORD(wParam) == WA_CLICKACTIVE)
+				::SetForegroundWindow(g_singleWindow);
 
 			break;
 		}

@@ -74,6 +74,15 @@ LRESULT CALLBACK exeditWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 {
 	switch (message)
 	{
+	case WM_ACTIVATE:
+		{
+			MY_TRACE(_T("exeditWindowProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
+
+			if (LOWORD(wParam) == WA_CLICKACTIVE)
+				::SetForegroundWindow(g_singleWindow);
+
+			break;
+		}
 	case WM_NCPAINT:
 		{
 			HDC dc = ::GetWindowDC(hwnd);
