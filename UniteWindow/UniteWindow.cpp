@@ -382,6 +382,17 @@ void dragBorder(POINT offset)
 	case HotBorder::left:		g_vertSplit.m_left += offset.y; break;
 	case HotBorder::right:		g_vertSplit.m_right += offset.y; break;
 	}
+
+	if (::GetKeyState(VK_SHIFT) < 0)
+	{
+		switch (g_hotBorder)
+		{
+		case HotBorder::top:		g_horzSplit.m_bottom = g_horzSplit.m_top; break;
+		case HotBorder::bottom:		g_horzSplit.m_top = g_horzSplit.m_bottom; break;
+		case HotBorder::left:		g_vertSplit.m_right = g_vertSplit.m_left; break;
+		case HotBorder::right:		g_vertSplit.m_left = g_vertSplit.m_right; break;
+		}
+	}
 }
 
 BOOL getHotBorderRect(LPRECT rc)

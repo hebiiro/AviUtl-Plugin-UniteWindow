@@ -125,14 +125,24 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 
 			break;
 		}
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+		{
+			// マウス座標を取得する。
+			POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+
+			// マウス座標を変換する。
+			::MapWindowPoints(hwnd, g_settingDialog.m_hwnd, &point, 1);
+
+			// 設定ダイアログにメッセージを転送する。
+			return ::SendMessage(g_settingDialog.m_hwnd, message, wParam, MAKELPARAM(point.x, point.y));
+		}
 	case WM_MOUSEWHEEL:
 		{
 			MY_TRACE(_T("SettingDialog::containerWndProc(WM_MOUSEWHEEL, %d)\n"), wParam);
 
-			g_settingDialog.scroll(SB_VERT, ((int)wParam > 0) ? SB_PAGEUP : SB_PAGEDOWN);
-			g_settingDialog.recalcLayout();
-
-			break;
+			// 設定ダイアログにメッセージを転送する。
+			return ::SendMessage(g_settingDialog.m_hwnd, message, wParam, lParam);
 		}
 	}
 
@@ -143,6 +153,15 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 {
 	switch (message)
 	{
+	case WM_GETMINMAXINFO:
+		{
+			MY_TRACE(_T("SettingDialogProc(WM_GETMINMAXINFO)\n"));
+
+			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+			mmi->ptMaxTrackSize.y *= 3;
+
+			break;
+		}
 	case WM_SIZE:
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_SIZE)\n"));
