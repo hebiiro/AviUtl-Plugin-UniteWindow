@@ -24,6 +24,9 @@ void ExeditWindow::init(HWND hwnd)
 
 	g_exeditWindowProc = (WNDPROC)::SetWindowLongPtr(
 		m_hwnd, GWLP_WNDPROC, (LONG_PTR)exeditWindowProc);
+
+	DWORD exedit = (DWORD)::GetModuleHandle(_T("exedit.auf"));
+	hookAbsoluteCall(exedit + 0x22128, Dropper_GetPixel);
 }
 
 LRESULT CALLBACK ExeditWindow::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

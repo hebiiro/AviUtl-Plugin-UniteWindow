@@ -1022,6 +1022,21 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lPa
 	return true_EnumWindows(enumProc, lParam);
 }
 
+COLORREF WINAPI Dropper_GetPixel(HDC dc, int x, int y)
+{
+	MY_TRACE(_T("Dropper_GetPixel(0x%08X, %d, %d)\n"), dc, x, y);
+
+	POINT point; ::GetCursorPos(&point);
+	HWND hwnd = ::WindowFromPoint(point);
+	RECT rc; ::GetWindowRect(hwnd, &rc);
+	point.x -= rc.left;
+	point.y -= rc.top;
+	HDC dc2 = ::GetWindowDC(hwnd);
+	COLORREF color = ::GetPixel(dc2, point.x, point.y);
+	::ReleaseDC(hwnd, dc2);
+	return color;
+}
+
 //---------------------------------------------------------------------
 
 EXTERN_C BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
