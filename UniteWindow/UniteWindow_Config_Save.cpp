@@ -30,6 +30,7 @@ HRESULT saveConfig(LPCWSTR fileName, BOOL _export)
 		{
 			setPrivateProfileInt(element, L"borderWidth", g_borderWidth);
 			setPrivateProfileInt(element, L"captionHeight", g_captionHeight);
+			setPrivateProfileInt(element, L"borderSnapRange", g_borderSnapRange);
 			setPrivateProfileColor(element, L"fillColor", g_fillColor);
 			setPrivateProfileColor(element, L"borderColor", g_borderColor);
 			setPrivateProfileColor(element, L"hotBorderColor", g_hotBorderColor);

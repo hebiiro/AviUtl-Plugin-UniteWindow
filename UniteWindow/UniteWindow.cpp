@@ -38,11 +38,12 @@ int g_hotBorder = HotBorder::none;
 
 int g_borderWidth = 8;
 int g_captionHeight = 24;
+int g_borderSnapRange = 8;
 COLORREF g_fillColor = RGB(0x55, 0x55, 0x55);
 COLORREF g_borderColor = RGB(0x66, 0x66, 0x66);
 COLORREF g_hotBorderColor = RGB(0x77, 0x77, 0x77);
 
-POINT g_lastPos = {}; // ドラッグ処理に使う。
+int g_offset = 0; // ドラッグ処理に使う。
 
 //---------------------------------------------------------------------
 
@@ -59,7 +60,6 @@ void initHook()
 	ATTACH_HOOK_PROC(CreateWindowExA);
 	ATTACH_HOOK_PROC(FindWindowExA);
 	ATTACH_HOOK_PROC(FindWindowW);
-	ATTACH_HOOK_PROC(GetWindow);
 	ATTACH_HOOK_PROC(EnumThreadWindows);
 	ATTACH_HOOK_PROC(EnumWindows);
 
@@ -371,26 +371,73 @@ int hitTest(POINT point)
 	return HotBorder::none;
 }
 
-void dragBorder(POINT offset)
+int getOffset(POINT point)
 {
 	switch (g_hotBorder)
 	{
-	case HotBorder::horzCenter:	g_horzSplit.m_center += offset.y; break;
-	case HotBorder::top:		g_horzSplit.m_top += offset.x; break;
-	case HotBorder::bottom:		g_horzSplit.m_bottom += offset.x; break;
-	case HotBorder::vertCenter:	g_vertSplit.m_center += offset.x; break;
-	case HotBorder::left:		g_vertSplit.m_left += offset.y; break;
-	case HotBorder::right:		g_vertSplit.m_right += offset.y; break;
+	case HotBorder::horzCenter: return g_horzSplit.m_center - point.y;
+	case HotBorder::top: return g_horzSplit.m_top - point.x;
+	case HotBorder::bottom: return g_horzSplit.m_bottom - point.x;
+	case HotBorder::vertCenter: return g_vertSplit.m_center - point.x;
+	case HotBorder::left: return g_vertSplit.m_left - point.y;
+	case HotBorder::right: return g_vertSplit.m_right - point.y;
+	}
+
+	return 0;
+}
+
+void dragBorder(POINT point)
+{
+	switch (g_hotBorder)
+	{
+	case HotBorder::horzCenter:
+		{
+			g_horzSplit.m_center = point.y + g_offset;
+			break;
+		}
+	case HotBorder::top:
+		{
+			g_horzSplit.m_top = point.x + g_offset;
+			if (abs(g_horzSplit.m_top - g_horzSplit.m_bottom) < g_borderSnapRange)
+				g_horzSplit.m_top = g_horzSplit.m_bottom;
+			break;
+		}
+	case HotBorder::bottom:
+		{
+			g_horzSplit.m_bottom = point.x + g_offset;
+			if (abs(g_horzSplit.m_bottom - g_horzSplit.m_top) < g_borderSnapRange)
+				g_horzSplit.m_bottom = g_horzSplit.m_top;
+			break;
+		}
+	case HotBorder::vertCenter:
+		{
+			g_vertSplit.m_center = point.x + g_offset;
+			break;
+		}
+	case HotBorder::left:
+		{
+			g_vertSplit.m_left = point.y + g_offset;
+			if (abs(g_vertSplit.m_left - g_vertSplit.m_right) < g_borderSnapRange)
+				g_vertSplit.m_left = g_vertSplit.m_right;
+			break;
+		}
+	case HotBorder::right:
+		{
+			g_vertSplit.m_right = point.y + g_offset;
+			if (abs(g_vertSplit.m_right - g_vertSplit.m_left) < g_borderSnapRange)
+				g_vertSplit.m_right = g_vertSplit.m_left;
+			break;
+		}
 	}
 
 	if (::GetKeyState(VK_SHIFT) < 0)
 	{
 		switch (g_hotBorder)
 		{
-		case HotBorder::top:		g_horzSplit.m_bottom = g_horzSplit.m_top; break;
-		case HotBorder::bottom:		g_horzSplit.m_top = g_horzSplit.m_bottom; break;
-		case HotBorder::left:		g_vertSplit.m_right = g_vertSplit.m_left; break;
-		case HotBorder::right:		g_vertSplit.m_left = g_vertSplit.m_right; break;
+		case HotBorder::top:	g_horzSplit.m_bottom = g_horzSplit.m_top; break;
+		case HotBorder::bottom:	g_horzSplit.m_top = g_horzSplit.m_bottom; break;
+		case HotBorder::left:	g_vertSplit.m_right = g_vertSplit.m_left; break;
+		case HotBorder::right:	g_vertSplit.m_left = g_vertSplit.m_right; break;
 		}
 	}
 }
@@ -800,8 +847,8 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			// ボーダーが有効かチェックする。
 			if (g_hotBorder != HotBorder::none)
 			{
-				// 最後のマウス座標を記憶しておく。
-				g_lastPos = point;
+				// オフセットを取得する。
+				g_offset = getOffset(point);
 
 				// マウスキャプチャを開始する。
 				::SetCapture(hwnd);
@@ -825,14 +872,8 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 				// マウスキャプチャを終了する。
 				::ReleaseCapture();
 
-				POINT offset =
-				{
-					point.x - g_lastPos.x,
-					point.y - g_lastPos.y,
-				};
-
 				// ボーダーを動かす。
-				dragBorder(offset);
+				dragBorder(point);
 
 				// レイアウトを再計算する。
 				recalcLayout();
@@ -851,23 +892,14 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			// マウスをキャプチャ中かチェックする。
 			if (::GetCapture() == hwnd)
 			{
-				POINT offset =
-				{
-					point.x - g_lastPos.x,
-					point.y - g_lastPos.y,
-				};
-
 				// ボーダーを動かす。
-				dragBorder(offset);
+				dragBorder(point);
 
 				// レイアウトを再計算する。
 				recalcLayout();
 
 				// 再描画する。
 				::InvalidateRect(hwnd, 0, FALSE);
-
-				// 最後のマウス座標を更新する。
-				g_lastPos = point;
 			}
 			else
 			{
@@ -968,6 +1000,7 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, 
 {
 	MY_TRACE(_T("FindWindowExA(0x%08X, 0x%08X, %hs, %hs)\n"), parent, childAfter, className, windowName);
 
+	// 「テキスト編集補助プラグイン」用。
 	if (!parent && className && ::lstrcmpiA(className, "ExtendedFilterClass") == 0)
 		return g_settingDialog.m_hwnd;
 
@@ -978,27 +1011,17 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windo
 {
 	MY_TRACE(_T("FindWindowW(%ws, %ws)\n"), className, windowName);
 
+	// 「PSDToolKit」の「送る」用。
 	if (className && ::lstrcmpiW(className, L"ExtendedFilterClass") == 0)
 		return g_settingDialog.m_hwnd;
 
 	return true_FindWindowW(className, windowName);
 }
-
-IMPLEMENT_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd))
-{
-	MY_TRACE(_T("GetWindow(0x%08X, %d)\n"), hwnd, cmd);
-	MY_TRACE_HWND(hwnd);
-
-	if (hwnd == g_settingDialog.m_hwnd && cmd == GW_OWNER)
-		return g_exeditWindow.m_hwnd;
-
-	return true_GetWindow(hwnd, cmd);
-}
-
 IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumThreadWindows, (DWORD threadId, WNDENUMPROC enumProc, LPARAM lParam))
 {
 	MY_TRACE(_T("EnumThreadWindows(%d, 0x%08X, 0x%08X)\n"), threadId, enumProc, lParam);
 
+	// 「イージング設定時短プラグイン」用。
 	if (threadId == ::GetCurrentThreadId() && enumProc && lParam)
 	{
 		// enumProc() の中で ::GetWindow() が呼ばれる。
@@ -1013,6 +1036,7 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lPa
 {
 	MY_TRACE(_T("EnumWindows(0x%08X, 0x%08X)\n"), enumProc, lParam);
 
+	// 「拡張編集RAMプレビュー」用。
 	if (enumProc && lParam)
 	{
 		if (!enumProc(g_aviutlWindow.m_hwnd, lParam))
