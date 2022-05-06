@@ -89,12 +89,12 @@ HWND createSingleWindow()
 	wc.hCursor = ::LoadCursor(0, IDC_ARROW);
 	wc.lpfnWndProc = singleWindowProc;
 	wc.hInstance = g_instance;
-	wc.lpszClassName = _T("UniteWindow");
+	wc.lpszClassName = _T("AviUtl");
 	::RegisterClass(&wc);
 
 	HWND hwnd = ::CreateWindowEx(
 		0,
-		_T("UniteWindow"),
+		_T("AviUtl"),
 		_T("UniteWindow"),
 		WS_VISIBLE |
 		WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME |
