@@ -49,6 +49,19 @@ struct WindowPos
 	static const int maxSize = 4;
 };
 
+struct
+{
+	int value;
+	LPCWSTR label;
+
+} const g_windowPosLabel[] =
+{
+	{ WindowPos::topLeft, L"topLeft" },
+	{ WindowPos::topRight, L"topRight" },
+	{ WindowPos::bottomLeft, L"bottomLeft" },
+	{ WindowPos::bottomRight, L"bottomRight" },
+};
+
 struct LayoutMode
 {
 	static const int vertSplit = 0;
@@ -57,18 +70,51 @@ struct LayoutMode
 	static const int maxSize = 2;
 };
 
-struct VertSplit
+struct
 {
-	int m_center;
-	int m_left;
-	int m_right;
+	int value;
+	LPCWSTR label;
+
+} const g_layoutModeLabel[] =
+{
+	{ LayoutMode::vertSplit, L"vertSplit" },
+	{ LayoutMode::horzSplit, L"horzSplit" },
 };
 
-struct HorzSplit
+struct Origin
 {
-	int m_center;
-	int m_top;
-	int m_bottom;
+	static const int topLeft = 0;
+	static const int bottomRight = 1;
+};
+
+struct
+{
+	int value;
+	LPCWSTR label;
+
+} const g_originLabel[] =
+{
+	{ Origin::topLeft, L"topLeft" },
+	{ Origin::bottomRight, L"bottomRight" },
+};
+
+struct Borders
+{
+	int m_vertCenter;
+	int m_vertLeft;
+	int m_vertRight;
+
+	int m_vertCenterOrigin;
+	int m_vertLeftOrigin;
+	int m_vertRightOrigin;
+
+	int m_horzCenter;
+	int m_horzTop;
+	int m_horzBottom;
+
+	int m_horzCenterOrigin;
+	int m_horzTopOrigin;
+	int m_horzBottomOrigin;
 };
 
 struct HotBorder
@@ -76,12 +122,12 @@ struct HotBorder
 	static const int none = 0;
 
 	static const int vertCenter = 1;
-	static const int left = 2;
-	static const int right = 3;
+	static const int vertLeft = 2;
+	static const int vertRight = 3;
 
 	static const int horzCenter = 4;
-	static const int top = 5;
-	static const int bottom = 6;
+	static const int horzTop = 5;
+	static const int horzBottom = 6;
 };
 
 struct CommandID
@@ -106,8 +152,7 @@ extern SettingDialog g_settingDialog;
 
 extern Window* g_windowArray[WindowPos::maxSize];
 extern int g_layoutMode;
-extern VertSplit g_vertSplit;
-extern HorzSplit g_horzSplit;
+extern Borders g_borders;
 extern int g_hotBorder;
 
 extern int g_borderWidth;
@@ -116,6 +161,21 @@ extern int g_borderSnapRange;
 extern COLORREF g_fillColor;
 extern COLORREF g_borderColor;
 extern COLORREF g_hotBorderColor;
+
+//---------------------------------------------------------------------
+
+struct
+{
+	Window* value;
+	LPCWSTR label;
+
+} const g_windowIdLabel[] =
+{
+	{ &g_aviutlWindow, L"aviutlWindow" },
+	{ &g_exeditWindow, L"exeditWindow" },
+	{ &g_settingDialog, L"settingDialog" },
+	{ 0, L"" },
+};
 
 //---------------------------------------------------------------------
 

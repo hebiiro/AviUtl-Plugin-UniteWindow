@@ -61,33 +61,6 @@ HRESULT loadConfig(LPCWSTR fileName, BOOL _import)
 	}
 }
 
-int stringToLayoutMode(LPCWSTR layoutModeString)
-{
-	if (::lstrcmpiW(layoutModeString, L"vertSplit") == 0) return LayoutMode::vertSplit;
-	else if (::lstrcmpiW(layoutModeString, L"horzSplit") == 0) return LayoutMode::horzSplit;
-
-	return LayoutMode::maxSize;
-}
-
-int stringToPos(LPCWSTR posString)
-{
-	if (::lstrcmpiW(posString, L"topLeft") == 0) return WindowPos::topLeft;
-	else if (::lstrcmpiW(posString, L"topRight") == 0) return WindowPos::topRight;
-	else if (::lstrcmpiW(posString, L"bottomLeft") == 0) return WindowPos::bottomLeft;
-	else if (::lstrcmpiW(posString, L"bottomRight") == 0) return WindowPos::bottomRight;
-
-	return WindowPos::maxSize;
-}
-
-Window* stringToWindow(LPCWSTR idString)
-{
-	if (::lstrcmpiW(idString, L"aviutlWindow") == 0) return &g_aviutlWindow;
-	else if (::lstrcmpiW(idString, L"exeditWindow") == 0) return &g_exeditWindow;
-	else if (::lstrcmpiW(idString, L"settingDialog") == 0) return &g_settingDialog;
-
-	return 0;
-}
-
 // <layout> を読み込む。
 HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 {
@@ -103,10 +76,7 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 		// <layout> のアトリビュートを読み込む。
 
 		// layoutMode を取得する。
-		_bstr_t layoutModeString = L"";
-		getPrivateProfileString(layoutElement, L"layoutMode", layoutModeString);
-		int layoutMode = stringToLayoutMode(layoutModeString);
-		if (layoutMode != LayoutMode::maxSize) g_layoutMode = layoutMode;
+		getPrivateProfileLabel(layoutElement, L"layoutMode", g_layoutMode, g_layoutModeLabel);
 
 		{
 			// <window> を読み込む。
@@ -117,17 +87,12 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 				MSXML2::IXMLDOMElementPtr windowElement = nodeList->item[i];
 
 				// pos を取得する。
-				_bstr_t posString = L"";
-				getPrivateProfileString(windowElement, L"pos", posString);
-				int pos = stringToPos(posString);
+				int pos = WindowPos::maxSize;
+				getPrivateProfileLabel(windowElement, L"pos", pos, g_windowPosLabel);
 				if (pos == WindowPos::maxSize) continue;
 
 				// id を取得する。
-				_bstr_t idString = L"";
-				getPrivateProfileString(windowElement, L"id", idString);
-				Window* window = stringToWindow(idString);
-
-				g_windowArray[pos] = window;
+				getPrivateProfileLabel(windowElement, L"id", g_windowArray[pos], g_windowIdLabel);
 			}
 		}
 
@@ -141,9 +106,13 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 
 				// <vertSplit> のアトリビュートを読み込む。
 
-				getPrivateProfileInt(vertSplitElement, L"center", g_vertSplit.m_center);
-				getPrivateProfileInt(vertSplitElement, L"left", g_vertSplit.m_left);
-				getPrivateProfileInt(vertSplitElement, L"right", g_vertSplit.m_right);
+				getPrivateProfileInt(vertSplitElement, L"center", g_borders.m_vertCenter);
+				getPrivateProfileInt(vertSplitElement, L"left", g_borders.m_vertLeft);
+				getPrivateProfileInt(vertSplitElement, L"right", g_borders.m_vertRight);
+
+				getPrivateProfileLabel(vertSplitElement, L"centerOrigin", g_borders.m_vertCenterOrigin, g_originLabel);
+				getPrivateProfileLabel(vertSplitElement, L"leftOrigin", g_borders.m_vertLeftOrigin, g_originLabel);
+				getPrivateProfileLabel(vertSplitElement, L"rightOrigin", g_borders.m_vertRightOrigin, g_originLabel);
 			}
 		}
 
@@ -157,9 +126,13 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 
 				// <horzSplit> のアトリビュートを読み込む。
 
-				getPrivateProfileInt(horzSplitElement, L"center", g_horzSplit.m_center);
-				getPrivateProfileInt(horzSplitElement, L"top", g_horzSplit.m_top);
-				getPrivateProfileInt(horzSplitElement, L"bottom", g_horzSplit.m_bottom);
+				getPrivateProfileInt(horzSplitElement, L"center", g_borders.m_horzCenter);
+				getPrivateProfileInt(horzSplitElement, L"top", g_borders.m_horzTop);
+				getPrivateProfileInt(horzSplitElement, L"bottom", g_borders.m_horzBottom);
+
+				getPrivateProfileLabel(horzSplitElement, L"centerOrigin", g_borders.m_horzCenterOrigin, g_originLabel);
+				getPrivateProfileLabel(horzSplitElement, L"topOrigin", g_borders.m_horzTopOrigin, g_originLabel);
+				getPrivateProfileLabel(horzSplitElement, L"bottomOrigin", g_borders.m_horzBottomOrigin, g_originLabel);
 			}
 		}
 	}

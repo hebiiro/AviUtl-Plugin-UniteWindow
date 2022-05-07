@@ -51,41 +51,6 @@ HRESULT saveConfig(LPCWSTR fileName, BOOL _export)
 	}
 }
 
-LPCWSTR layoutModeToString(int value)
-{
-	switch (value)
-	{
-	case LayoutMode::vertSplit: return L"vertSplit";
-	case LayoutMode::horzSplit: return L"horzSplit";
-	}
-
-	return L"";
-}
-
-LPCWSTR posToString(int i)
-{
-	switch (i)
-	{
-	case WindowPos::topLeft: return L"topLeft";
-	case WindowPos::topRight: return L"topRight";
-	case WindowPos::bottomLeft: return L"bottomLeft";
-	case WindowPos::bottomRight: return L"bottomRight";
-	}
-
-	return L"";
-}
-
-LPCWSTR idToString(int i)
-{
-	Window* window = g_windowArray[i];
-
-	if (window == &g_aviutlWindow) return L"aviutlWindow";
-	else if (window == &g_exeditWindow) return L"exeditWindow";
-	else if (window == &g_settingDialog) return L"settingDialog";
-
-	return L"";
-}
-
 // <layout> を作成する。
 HRESULT saveLayout(const MSXML2::IXMLDOMElementPtr& element)
 {
@@ -94,30 +59,33 @@ HRESULT saveLayout(const MSXML2::IXMLDOMElementPtr& element)
 	// <layout> を作成する。
 	MSXML2::IXMLDOMElementPtr layoutElement = appendElement(element, L"layout");
 
-	setPrivateProfileString(layoutElement, L"layoutMode", layoutModeToString(g_layoutMode));
+	setPrivateProfileLabel(layoutElement, L"layoutMode", g_layoutMode, g_layoutModeLabel);
 
 	for (int i = 0; i < WindowPos::maxSize; i++)
 	{
-		LPCWSTR pos = posToString(i);
-		LPCWSTR id = idToString(i);
-
 		// <window> を作成する。
 		MSXML2::IXMLDOMElementPtr windowElement = appendElement(layoutElement, L"window");
-		setPrivateProfileString(windowElement, L"pos", pos);
-		setPrivateProfileString(windowElement, L"id", id);
+		setPrivateProfileLabel(windowElement, L"pos", i, g_windowPosLabel);
+		setPrivateProfileLabel(windowElement, L"id", g_windowArray[i], g_windowIdLabel);
 	}
 
 	// <vertSplit> を作成する。
 	MSXML2::IXMLDOMElementPtr vertSplitElement = appendElement(layoutElement, L"vertSplit");
-	setPrivateProfileInt(vertSplitElement, L"center", g_vertSplit.m_center);
-	setPrivateProfileInt(vertSplitElement, L"left", g_vertSplit.m_left);
-	setPrivateProfileInt(vertSplitElement, L"right", g_vertSplit.m_right);
+	setPrivateProfileInt(vertSplitElement, L"center", g_borders.m_vertCenter);
+	setPrivateProfileInt(vertSplitElement, L"left", g_borders.m_vertLeft);
+	setPrivateProfileInt(vertSplitElement, L"right", g_borders.m_vertRight);
+	setPrivateProfileLabel(vertSplitElement, L"centerOrigin", g_borders.m_vertCenterOrigin, g_originLabel);
+	setPrivateProfileLabel(vertSplitElement, L"leftOrigin", g_borders.m_vertLeftOrigin, g_originLabel);
+	setPrivateProfileLabel(vertSplitElement, L"rightOrigin", g_borders.m_vertRightOrigin, g_originLabel);
 
 	// <horzSplit> を作成する。
 	MSXML2::IXMLDOMElementPtr horzSplitElement = appendElement(layoutElement, L"horzSplit");
-	setPrivateProfileInt(horzSplitElement, L"center", g_horzSplit.m_center);
-	setPrivateProfileInt(horzSplitElement, L"top", g_horzSplit.m_top);
-	setPrivateProfileInt(horzSplitElement, L"bottom", g_horzSplit.m_bottom);
+	setPrivateProfileInt(horzSplitElement, L"center", g_borders.m_horzCenter);
+	setPrivateProfileInt(horzSplitElement, L"top", g_borders.m_horzTop);
+	setPrivateProfileInt(horzSplitElement, L"bottom", g_borders.m_horzBottom);
+	setPrivateProfileLabel(horzSplitElement, L"centerOrigin", g_borders.m_horzCenterOrigin, g_originLabel);
+	setPrivateProfileLabel(horzSplitElement, L"topOrigin", g_borders.m_horzTopOrigin, g_originLabel);
+	setPrivateProfileLabel(horzSplitElement, L"bottomOrigin", g_borders.m_horzBottomOrigin, g_originLabel);
 
 	return S_OK;
 }

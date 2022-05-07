@@ -32,8 +32,7 @@ Window* g_windowArray[WindowPos::maxSize] =
 };
 
 int g_layoutMode = LayoutMode::horzSplit;
-VertSplit g_vertSplit = {};
-HorzSplit g_horzSplit = {};
+Borders g_borders = {};
 int g_hotBorder = HotBorder::none;
 
 int g_borderWidth = 8;
@@ -108,13 +107,19 @@ HWND createSingleWindow()
 
 	g_layoutMode = LayoutMode::horzSplit;
 
-	g_vertSplit.m_center = cx;
-	g_vertSplit.m_left = cy;
-	g_vertSplit.m_right = cy;
+	g_borders.m_vertCenter = cx;
+	g_borders.m_vertLeft = cy;
+	g_borders.m_vertRight = cy;
+	g_borders.m_vertCenterOrigin = Origin::bottomRight;
+	g_borders.m_vertLeftOrigin = Origin::bottomRight;
+	g_borders.m_vertRightOrigin = Origin::bottomRight;
 
-	g_horzSplit.m_center = cy;
-	g_horzSplit.m_top = cx;
-	g_horzSplit.m_bottom = cx;
+	g_borders.m_horzCenter = cy;
+	g_borders.m_horzTop = cx;
+	g_borders.m_horzBottom = cx;
+	g_borders.m_horzCenterOrigin = Origin::bottomRight;
+	g_borders.m_horzTopOrigin = Origin::bottomRight;
+	g_borders.m_horzBottomOrigin = Origin::bottomRight;
 
 	return hwnd;
 }
@@ -125,14 +130,14 @@ void normalizeLayoutVertSplit()
 
 	RECT rc; ::GetClientRect(g_singleWindow, &rc);
 
-	g_vertSplit.m_center = max(g_vertSplit.m_center, rc.left);
-	g_vertSplit.m_center = min(g_vertSplit.m_center, rc.right - g_borderWidth);
+	g_borders.m_vertCenter = max(g_borders.m_vertCenter, rc.left);
+	g_borders.m_vertCenter = min(g_borders.m_vertCenter, rc.right - g_borderWidth);
 
-	g_vertSplit.m_left = max(g_vertSplit.m_left, rc.top);
-	g_vertSplit.m_left = min(g_vertSplit.m_left, rc.bottom - g_borderWidth);
+	g_borders.m_vertLeft = max(g_borders.m_vertLeft, rc.top);
+	g_borders.m_vertLeft = min(g_borders.m_vertLeft, rc.bottom - g_borderWidth);
 
-	g_vertSplit.m_right = max(g_vertSplit.m_right, rc.top);
-	g_vertSplit.m_right = min(g_vertSplit.m_right, rc.bottom - g_borderWidth);
+	g_borders.m_vertRight = max(g_borders.m_vertRight, rc.top);
+	g_borders.m_vertRight = min(g_borders.m_vertRight, rc.bottom - g_borderWidth);
 }
 
 void normalizeLayoutHorzSplit()
@@ -141,14 +146,14 @@ void normalizeLayoutHorzSplit()
 
 	RECT rc; ::GetClientRect(g_singleWindow, &rc);
 
-	g_horzSplit.m_center = max(g_horzSplit.m_center, rc.top);
-	g_horzSplit.m_center = min(g_horzSplit.m_center, rc.bottom - g_borderWidth);
+	g_borders.m_horzCenter = max(g_borders.m_horzCenter, rc.top);
+	g_borders.m_horzCenter = min(g_borders.m_horzCenter, rc.bottom - g_borderWidth);
 
-	g_horzSplit.m_top = max(g_horzSplit.m_top, rc.left);
-	g_horzSplit.m_top = min(g_horzSplit.m_top, rc.right - g_borderWidth);
+	g_borders.m_horzTop = max(g_borders.m_horzTop, rc.left);
+	g_borders.m_horzTop = min(g_borders.m_horzTop, rc.right - g_borderWidth);
 
-	g_horzSplit.m_bottom = max(g_horzSplit.m_bottom, rc.left);
-	g_horzSplit.m_bottom = min(g_horzSplit.m_bottom, rc.right - g_borderWidth);
+	g_borders.m_horzBottom = max(g_borders.m_horzBottom, rc.left);
+	g_borders.m_horzBottom = min(g_borders.m_horzBottom, rc.right - g_borderWidth);
 }
 
 void normalizeLayout()
@@ -172,62 +177,133 @@ void normalizeLayout()
 	}
 }
 
+int borderToX(LPCRECT rcClient, int border, int borderOrigin)
+{
+	switch (borderOrigin)
+	{
+	case Origin::topLeft:
+		{
+			return border;
+		}
+	case Origin::bottomRight:
+		{
+			return rcClient->right - border - g_borderWidth;
+		}
+	}
+
+	return 0;
+}
+
+int borderToY(LPCRECT rcClient, int border, int borderOrigin)
+{
+	switch (borderOrigin)
+	{
+	case Origin::topLeft:
+		{
+			return border;
+		}
+	case Origin::bottomRight:
+		{
+			return rcClient->bottom - border - g_borderWidth;
+		}
+	}
+
+	return 0;
+}
+
+int xToBorder(LPCRECT rcClient, int x, int borderOrigin)
+{
+	switch (borderOrigin)
+	{
+	case Origin::topLeft:
+		{
+			return x;
+		}
+	case Origin::bottomRight:
+		{
+			return rcClient->right - x - g_borderWidth;
+		}
+	}
+
+	return 0;
+}
+
+int yToBorder(LPCRECT rcClient, int y, int borderOrigin)
+{
+	switch (borderOrigin)
+	{
+	case Origin::topLeft:
+		{
+			return y;
+		}
+	case Origin::bottomRight:
+		{
+			return rcClient->bottom - y - g_borderWidth;
+		}
+	}
+
+	return 0;
+}
+
 void recalcLayoutVertSplit()
 {
 	MY_TRACE(_T("recalcLayoutVertSplit()\n"));
 
-	RECT rc; ::GetClientRect(g_singleWindow, &rc);
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+	int borderVertCenter = borderToX(&rcClient, g_borders.m_vertCenter, g_borders.m_vertCenterOrigin);
+	int borderVertLeft = borderToY(&rcClient, g_borders.m_vertLeft, g_borders.m_vertLeftOrigin);
+	int borderVertRight = borderToY(&rcClient, g_borders.m_vertRight, g_borders.m_vertRightOrigin);
 
 	if (g_windowArray[WindowPos::topLeft])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			rc.left,
-			rc.top + g_captionHeight,
-			g_vertSplit.m_center,
-			g_vertSplit.m_left,
+			rcClient.left,
+			rcClient.top + g_captionHeight,
+			borderVertCenter,
+			borderVertLeft,
 		};
 
-		g_windowArray[WindowPos::topLeft]->resize(&rc2);
+		g_windowArray[WindowPos::topLeft]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::topRight])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			g_vertSplit.m_center + g_borderWidth,
-			rc.top + g_captionHeight,
-			rc.right,
-			g_vertSplit.m_right,
+			borderVertCenter + g_borderWidth,
+			rcClient.top + g_captionHeight,
+			rcClient.right,
+			borderVertRight,
 		};
 
-		g_windowArray[WindowPos::topRight]->resize(&rc2);
+		g_windowArray[WindowPos::topRight]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomLeft])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			rc.left,
-			g_vertSplit.m_left + g_borderWidth + g_captionHeight,
-			g_vertSplit.m_center,
-			rc.bottom,
+			rcClient.left,
+			borderVertLeft + g_borderWidth + g_captionHeight,
+			borderVertCenter,
+			rcClient.bottom,
 		};
 
-		g_windowArray[WindowPos::bottomLeft]->resize(&rc2);
+		g_windowArray[WindowPos::bottomLeft]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomRight])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			g_vertSplit.m_center + g_borderWidth,
-			g_vertSplit.m_right + g_borderWidth + g_captionHeight,
-			rc.right,
-			rc.bottom,
+			borderVertCenter + g_borderWidth,
+			borderVertRight + g_borderWidth + g_captionHeight,
+			rcClient.right,
+			rcClient.bottom,
 		};
 
-		g_windowArray[WindowPos::bottomRight]->resize(&rc2);
+		g_windowArray[WindowPos::bottomRight]->resize(&rcContainer);
 	}
 }
 
@@ -235,58 +311,61 @@ void recalcLayoutHorzSplit()
 {
 	MY_TRACE(_T("recalcLayoutHorzSplit()\n"));
 
-	RECT rc; ::GetClientRect(g_singleWindow, &rc);
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+	int borderHorzCenter = borderToY(&rcClient, g_borders.m_horzCenter, g_borders.m_horzCenterOrigin);
+	int borderHorzTop = borderToX(&rcClient, g_borders.m_horzTop, g_borders.m_horzTopOrigin);
+	int borderHorzBottom = borderToX(&rcClient, g_borders.m_horzBottom, g_borders.m_horzBottomOrigin);
 
 	if (g_windowArray[WindowPos::topLeft])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			rc.left,
-			rc.top + g_captionHeight,
-			g_horzSplit.m_top,
-			g_horzSplit.m_center,
+			rcClient.left,
+			rcClient.top + g_captionHeight,
+			borderHorzTop,
+			borderHorzCenter,
 		};
 
-		g_windowArray[WindowPos::topLeft]->resize(&rc2);
+		g_windowArray[WindowPos::topLeft]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::topRight])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			g_horzSplit.m_top + g_borderWidth,
-			rc.top + g_captionHeight,
-			rc.right,
-			g_horzSplit.m_center,
+			borderHorzTop + g_borderWidth,
+			rcClient.top + g_captionHeight,
+			rcClient.right,
+			borderHorzCenter,
 		};
 
-		g_windowArray[WindowPos::topRight]->resize(&rc2);
+		g_windowArray[WindowPos::topRight]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomLeft])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			rc.left,
-			g_horzSplit.m_center + g_borderWidth + g_captionHeight,
-			g_horzSplit.m_bottom,
-			rc.bottom,
+			rcClient.left,
+			borderHorzCenter + g_borderWidth + g_captionHeight,
+			borderHorzBottom,
+			rcClient.bottom,
 		};
 
-		g_windowArray[WindowPos::bottomLeft]->resize(&rc2);
+		g_windowArray[WindowPos::bottomLeft]->resize(&rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomRight])
 	{
-		RECT rc2 =
+		RECT rcContainer =
 		{
-			g_horzSplit.m_bottom + g_borderWidth,
-			g_horzSplit.m_center + g_borderWidth + g_captionHeight,
-			rc.right,
-			rc.bottom,
+			borderHorzBottom + g_borderWidth,
+			borderHorzCenter + g_borderWidth + g_captionHeight,
+			rcClient.right,
+			rcClient.bottom,
 		};
 
-		g_windowArray[WindowPos::bottomRight]->resize(&rc2);
+		g_windowArray[WindowPos::bottomRight]->resize(&rcContainer);
 	}
 }
 
@@ -318,21 +397,24 @@ void recalcLayout()
 
 int hitTestVertSplit(POINT point)
 {
-	RECT rc; ::GetClientRect(g_singleWindow, &rc);
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+	int borderVertCenter = borderToX(&rcClient, g_borders.m_vertCenter, g_borders.m_vertCenterOrigin);
+	int borderVertLeft = borderToY(&rcClient, g_borders.m_vertLeft, g_borders.m_vertLeftOrigin);
+	int borderVertRight = borderToY(&rcClient, g_borders.m_vertRight, g_borders.m_vertRightOrigin);
 
-	if (point.x < g_vertSplit.m_center)
+	if (point.x < borderVertCenter)
 	{
-		if (point.y >= g_vertSplit.m_left && point.y < g_vertSplit.m_left + g_borderWidth)
-			return HotBorder::left;
+		if (point.y >= borderVertLeft && point.y < borderVertLeft + g_borderWidth)
+			return HotBorder::vertLeft;
 	}
-	else if (point.x < g_vertSplit.m_center + g_borderWidth)
+	else if (point.x < borderVertCenter + g_borderWidth)
 	{
 		return HotBorder::vertCenter;
 	}
 	else
 	{
-		if (point.y >= g_vertSplit.m_right && point.y < g_vertSplit.m_right + g_borderWidth)
-			return HotBorder::right;
+		if (point.y >= borderVertRight && point.y < borderVertRight + g_borderWidth)
+			return HotBorder::vertRight;
 	}
 
 	return HotBorder::none;
@@ -340,21 +422,24 @@ int hitTestVertSplit(POINT point)
 
 int hitTestHorzSplit(POINT point)
 {
-	RECT rc; ::GetClientRect(g_singleWindow, &rc);
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+	int borderHorzCenter = borderToY(&rcClient, g_borders.m_horzCenter, g_borders.m_horzCenterOrigin);
+	int borderHorzTop = borderToX(&rcClient, g_borders.m_horzTop, g_borders.m_horzTopOrigin);
+	int borderHorzBottom = borderToX(&rcClient, g_borders.m_horzBottom, g_borders.m_horzBottomOrigin);
 
-	if (point.y < g_horzSplit.m_center)
+	if (point.y < borderHorzCenter)
 	{
-		if (point.x >= g_horzSplit.m_top && point.x < g_horzSplit.m_top + g_borderWidth)
-			return HotBorder::top;
+		if (point.x >= borderHorzTop && point.x < borderHorzTop + g_borderWidth)
+			return HotBorder::horzTop;
 	}
-	else if (point.y < g_horzSplit.m_center + g_borderWidth)
+	else if (point.y < borderHorzCenter + g_borderWidth)
 	{
 		return HotBorder::horzCenter;
 	}
 	else
 	{
-		if (point.x >= g_horzSplit.m_bottom && point.x < g_horzSplit.m_bottom + g_borderWidth)
-			return HotBorder::bottom;
+		if (point.x >= borderHorzBottom && point.x < borderHorzBottom + g_borderWidth)
+			return HotBorder::horzBottom;
 	}
 
 	return HotBorder::none;
@@ -373,14 +458,16 @@ int hitTest(POINT point)
 
 int getOffset(POINT point)
 {
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+
 	switch (g_hotBorder)
 	{
-	case HotBorder::horzCenter: return g_horzSplit.m_center - point.y;
-	case HotBorder::top: return g_horzSplit.m_top - point.x;
-	case HotBorder::bottom: return g_horzSplit.m_bottom - point.x;
-	case HotBorder::vertCenter: return g_vertSplit.m_center - point.x;
-	case HotBorder::left: return g_vertSplit.m_left - point.y;
-	case HotBorder::right: return g_vertSplit.m_right - point.y;
+	case HotBorder::horzCenter: return g_borders.m_horzCenter - yToBorder(&rcClient, point.y, g_borders.m_horzCenterOrigin);
+	case HotBorder::horzTop: return g_borders.m_horzTop - xToBorder(&rcClient, point.x, g_borders.m_horzTopOrigin);
+	case HotBorder::horzBottom: return g_borders.m_horzBottom - xToBorder(&rcClient, point.x, g_borders.m_horzBottomOrigin);
+	case HotBorder::vertCenter: return g_borders.m_vertCenter - xToBorder(&rcClient, point.x, g_borders.m_vertCenterOrigin);
+	case HotBorder::vertLeft: return g_borders.m_vertLeft - yToBorder(&rcClient, point.y, g_borders.m_vertLeftOrigin);
+	case HotBorder::vertRight: return g_borders.m_vertRight - yToBorder(&rcClient, point.y, g_borders.m_vertRightOrigin);
 	}
 
 	return 0;
@@ -388,44 +475,46 @@ int getOffset(POINT point)
 
 void dragBorder(POINT point)
 {
+	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+
 	switch (g_hotBorder)
 	{
 	case HotBorder::horzCenter:
 		{
-			g_horzSplit.m_center = point.y + g_offset;
+			g_borders.m_horzCenter = yToBorder(&rcClient, point.y, g_borders.m_horzCenterOrigin) + g_offset;
 			break;
 		}
-	case HotBorder::top:
+	case HotBorder::horzTop:
 		{
-			g_horzSplit.m_top = point.x + g_offset;
-			if (abs(g_horzSplit.m_top - g_horzSplit.m_bottom) < g_borderSnapRange)
-				g_horzSplit.m_top = g_horzSplit.m_bottom;
+			g_borders.m_horzTop = xToBorder(&rcClient, point.x, g_borders.m_horzTopOrigin) + g_offset;
+			if (abs(g_borders.m_horzTop - g_borders.m_horzBottom) < g_borderSnapRange)
+				g_borders.m_horzTop = g_borders.m_horzBottom;
 			break;
 		}
-	case HotBorder::bottom:
+	case HotBorder::horzBottom:
 		{
-			g_horzSplit.m_bottom = point.x + g_offset;
-			if (abs(g_horzSplit.m_bottom - g_horzSplit.m_top) < g_borderSnapRange)
-				g_horzSplit.m_bottom = g_horzSplit.m_top;
+			g_borders.m_horzBottom = xToBorder(&rcClient, point.x, g_borders.m_horzBottomOrigin) + g_offset;
+			if (abs(g_borders.m_horzBottom - g_borders.m_horzTop) < g_borderSnapRange)
+				g_borders.m_horzBottom = g_borders.m_horzTop;
 			break;
 		}
 	case HotBorder::vertCenter:
 		{
-			g_vertSplit.m_center = point.x + g_offset;
+			g_borders.m_vertCenter = xToBorder(&rcClient, point.x, g_borders.m_vertCenterOrigin) + g_offset;
 			break;
 		}
-	case HotBorder::left:
+	case HotBorder::vertLeft:
 		{
-			g_vertSplit.m_left = point.y + g_offset;
-			if (abs(g_vertSplit.m_left - g_vertSplit.m_right) < g_borderSnapRange)
-				g_vertSplit.m_left = g_vertSplit.m_right;
+			g_borders.m_vertLeft = yToBorder(&rcClient, point.y, g_borders.m_vertLeftOrigin) + g_offset;
+			if (abs(g_borders.m_vertLeft - g_borders.m_vertRight) < g_borderSnapRange)
+				g_borders.m_vertLeft = g_borders.m_vertRight;
 			break;
 		}
-	case HotBorder::right:
+	case HotBorder::vertRight:
 		{
-			g_vertSplit.m_right = point.y + g_offset;
-			if (abs(g_vertSplit.m_right - g_vertSplit.m_left) < g_borderSnapRange)
-				g_vertSplit.m_right = g_vertSplit.m_left;
+			g_borders.m_vertRight = yToBorder(&rcClient, point.y, g_borders.m_vertRightOrigin) + g_offset;
+			if (abs(g_borders.m_vertRight - g_borders.m_vertLeft) < g_borderSnapRange)
+				g_borders.m_vertRight = g_borders.m_vertLeft;
 			break;
 		}
 	}
@@ -434,10 +523,10 @@ void dragBorder(POINT point)
 	{
 		switch (g_hotBorder)
 		{
-		case HotBorder::top:	g_horzSplit.m_bottom = g_horzSplit.m_top; break;
-		case HotBorder::bottom:	g_horzSplit.m_top = g_horzSplit.m_bottom; break;
-		case HotBorder::left:	g_vertSplit.m_right = g_vertSplit.m_left; break;
-		case HotBorder::right:	g_vertSplit.m_left = g_vertSplit.m_right; break;
+		case HotBorder::horzTop:	g_borders.m_horzBottom = g_borders.m_horzTop; break;
+		case HotBorder::horzBottom:	g_borders.m_horzTop = g_borders.m_horzBottom; break;
+		case HotBorder::vertLeft:	g_borders.m_vertRight = g_borders.m_vertLeft; break;
+		case HotBorder::vertRight:	g_borders.m_vertLeft = g_borders.m_vertRight; break;
 		}
 	}
 }
@@ -445,60 +534,66 @@ void dragBorder(POINT point)
 BOOL getHotBorderRect(LPRECT rc)
 {
 	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
+	int borderVertCenter = borderToX(&rcClient, g_borders.m_vertCenter, g_borders.m_vertCenterOrigin);
+	int borderVertLeft = borderToY(&rcClient, g_borders.m_vertLeft, g_borders.m_vertLeftOrigin);
+	int borderVertRight = borderToY(&rcClient, g_borders.m_vertRight, g_borders.m_vertRightOrigin);
+	int borderHorzCenter = borderToY(&rcClient, g_borders.m_horzCenter, g_borders.m_horzCenterOrigin);
+	int borderHorzTop = borderToX(&rcClient, g_borders.m_horzTop, g_borders.m_horzTopOrigin);
+	int borderHorzBottom = borderToX(&rcClient, g_borders.m_horzBottom, g_borders.m_horzBottomOrigin);
 
 	switch (g_hotBorder)
 	{
 	case HotBorder::horzCenter:
 		{
 			rc->left = rcClient.left;
-			rc->top = g_horzSplit.m_center;
+			rc->top = borderHorzCenter;
 			rc->right = rcClient.right;
-			rc->bottom = g_horzSplit.m_center + g_borderWidth;
+			rc->bottom = borderHorzCenter + g_borderWidth;
 
 			return TRUE;
 		}
-	case HotBorder::top:
+	case HotBorder::horzTop:
 		{
-			rc->left = g_horzSplit.m_top;
+			rc->left = borderHorzTop;
 			rc->top = rcClient.top;
-			rc->right = g_horzSplit.m_top + g_borderWidth;
-			rc->bottom = g_horzSplit.m_center;
+			rc->right = borderHorzTop + g_borderWidth;
+			rc->bottom = borderHorzCenter;
 
 			return TRUE;
 		}
-	case HotBorder::bottom:
+	case HotBorder::horzBottom:
 		{
-			rc->left = g_horzSplit.m_bottom;
-			rc->top = g_horzSplit.m_center + g_borderWidth;
-			rc->right = g_horzSplit.m_bottom + g_borderWidth;
+			rc->left = borderHorzBottom;
+			rc->top = borderHorzCenter + g_borderWidth;
+			rc->right = borderHorzBottom + g_borderWidth;
 			rc->bottom = rcClient.bottom;
 
 			return TRUE;
 		}
 	case HotBorder::vertCenter:
 		{
-			rc->left = g_vertSplit.m_center;
+			rc->left = borderVertCenter;
 			rc->top = rcClient.top;
-			rc->right = g_vertSplit.m_center + g_borderWidth;
+			rc->right = borderVertCenter + g_borderWidth;
 			rc->bottom = rcClient.bottom;
 
 			return TRUE;
 		}
-	case HotBorder::left:
+	case HotBorder::vertLeft:
 		{
 			rc->left = rcClient.left;
-			rc->top = g_vertSplit.m_left;
-			rc->right = g_vertSplit.m_center;
-			rc->bottom = g_vertSplit.m_left + g_borderWidth;
+			rc->top = borderVertLeft;
+			rc->right = borderVertCenter;
+			rc->bottom = borderVertLeft + g_borderWidth;
 
 			return TRUE;
 		}
-	case HotBorder::right:
+	case HotBorder::vertRight:
 		{
-			rc->left = g_vertSplit.m_center + g_borderWidth;
-			rc->top = g_vertSplit.m_right;
+			rc->left = borderVertCenter + g_borderWidth;
+			rc->top = borderVertRight;
 			rc->right = rcClient.right;
-			rc->bottom = g_vertSplit.m_right + g_borderWidth;
+			rc->bottom = borderVertRight + g_borderWidth;
 
 			return TRUE;
 		}
@@ -510,6 +605,10 @@ BOOL getHotBorderRect(LPRECT rc)
 void drawCaption(HDC dc, HWND hwnd, Window* window)
 {
 	RECT rc; ::GetWindowRect(window->m_hwndContainer, &rc);
+
+	if ((rc.bottom - rc.top) <= 0)
+		return; // ウィンドウの高さが小さすぎる場合は何もしない。
+
 	::MapWindowPoints(0, hwnd, (POINT*)&rc, 2);
 	rc.bottom = rc.top - 1;
 	rc.top = rc.top - g_captionHeight;
@@ -585,12 +684,30 @@ int showConfigDialog(HWND hwnd)
 		ComboBox_AddString(hwndWindow[i], _T("ウィンドウなし"));
 		ComboBox_SetCurSel(hwndWindow[i], getComboBoxIndexFromWindow(g_windowArray[i]));
 	}
-	::SetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, g_vertSplit.m_center, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_LEFT, g_vertSplit.m_left, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_RIGHT, g_vertSplit.m_right, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, g_horzSplit.m_center, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_TOP, g_horzSplit.m_top, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_BOTTOM, g_horzSplit.m_bottom, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, g_borders.m_vertCenter, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_VERT_LEFT, g_borders.m_vertLeft, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_VERT_RIGHT, g_borders.m_vertRight, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, g_borders.m_horzCenter, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_TOP, g_borders.m_horzTop, TRUE);
+	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_BOTTOM, g_borders.m_horzBottom, TRUE);
+	HWND hwndOrigin[6] = {};
+	hwndOrigin[0] = ::GetDlgItem(dialog, IDC_BORDER_VERT_CENTER_ORIGIN);
+	hwndOrigin[1] = ::GetDlgItem(dialog, IDC_BORDER_VERT_LEFT_ORIGIN);
+	hwndOrigin[2] = ::GetDlgItem(dialog, IDC_BORDER_VERT_RIGHT_ORIGIN);
+	hwndOrigin[3] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_CENTER_ORIGIN);
+	hwndOrigin[4] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_TOP_ORIGIN);
+	hwndOrigin[5] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_BOTTOM_ORIGIN);
+	for (int i = 0; i < 6; i++)
+	{
+		ComboBox_AddString(hwndOrigin[i], _T("左上基点"));
+		ComboBox_AddString(hwndOrigin[i], _T("右下基点"));
+	}
+	ComboBox_SetCurSel(hwndOrigin[0], g_borders.m_vertCenterOrigin);
+	ComboBox_SetCurSel(hwndOrigin[1], g_borders.m_vertLeftOrigin);
+	ComboBox_SetCurSel(hwndOrigin[2], g_borders.m_vertRightOrigin);
+	ComboBox_SetCurSel(hwndOrigin[3], g_borders.m_horzCenterOrigin);
+	ComboBox_SetCurSel(hwndOrigin[4], g_borders.m_horzTopOrigin);
+	ComboBox_SetCurSel(hwndOrigin[5], g_borders.m_horzBottomOrigin);
 
 	int retValue = dialog.doModal();
 
@@ -600,12 +717,18 @@ int showConfigDialog(HWND hwnd)
 	g_layoutMode = ComboBox_GetCurSel(hwndLayoutMode);
 	for (int i = 0; i < WindowPos::maxSize; i++)
 		g_windowArray[i] = getWindowFromComboBoxIndex(ComboBox_GetCurSel(hwndWindow[i]));
-	g_vertSplit.m_center = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, 0, TRUE);
-	g_vertSplit.m_left = ::GetDlgItemInt(dialog, IDC_BORDER_LEFT, 0, TRUE);
-	g_vertSplit.m_right = ::GetDlgItemInt(dialog, IDC_BORDER_RIGHT, 0, TRUE);
-	g_horzSplit.m_center = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, 0, TRUE);
-	g_horzSplit.m_top = ::GetDlgItemInt(dialog, IDC_BORDER_TOP, 0, TRUE);
-	g_horzSplit.m_bottom = ::GetDlgItemInt(dialog, IDC_BORDER_BOTTOM, 0, TRUE);
+	g_borders.m_vertCenter = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, 0, TRUE);
+	g_borders.m_vertLeft = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_LEFT, 0, TRUE);
+	g_borders.m_vertRight = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_RIGHT, 0, TRUE);
+	g_borders.m_horzCenter = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, 0, TRUE);
+	g_borders.m_horzTop = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_TOP, 0, TRUE);
+	g_borders.m_horzBottom = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_BOTTOM, 0, TRUE);
+	g_borders.m_vertCenterOrigin = ComboBox_GetCurSel(hwndOrigin[0]);
+	g_borders.m_vertLeftOrigin = ComboBox_GetCurSel(hwndOrigin[1]);
+	g_borders.m_vertRightOrigin = ComboBox_GetCurSel(hwndOrigin[2]);
+	g_borders.m_horzCenterOrigin = ComboBox_GetCurSel(hwndOrigin[3]);
+	g_borders.m_horzTopOrigin = ComboBox_GetCurSel(hwndOrigin[4]);
+	g_borders.m_horzBottomOrigin = ComboBox_GetCurSel(hwndOrigin[5]);
 
 	// レイアウトを再計算する。
 	recalcLayout();
@@ -814,16 +937,16 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 				switch (hotBorder)
 				{
 				case HotBorder::vertCenter:
-				case HotBorder::top:
-				case HotBorder::bottom:
+				case HotBorder::horzTop:
+				case HotBorder::horzBottom:
 					{
 						::SetCursor(::LoadCursor(0, IDC_SIZEWE));
 
 						return TRUE;
 					}
 				case HotBorder::horzCenter:
-				case HotBorder::left:
-				case HotBorder::right:
+				case HotBorder::vertLeft:
+				case HotBorder::vertRight:
 					{
 						::SetCursor(::LoadCursor(0, IDC_SIZENS));
 
