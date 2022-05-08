@@ -13,6 +13,7 @@ void ExeditWindow::init(HWND hwnd)
 
 	DWORD style = ::GetWindowLong(m_hwnd, GWL_STYLE);
 	style &= ~(WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+	style |= WS_CHILD;
 	::SetWindowLong(m_hwnd, GWL_STYLE, style);
 #if 0
 	DWORD exStyle = ::GetWindowLong(m_hwnd, GWL_EXSTYLE);
@@ -77,15 +78,6 @@ LRESULT CALLBACK exeditWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 {
 	switch (message)
 	{
-	case WM_ACTIVATE:
-		{
-			MY_TRACE(_T("exeditWindowProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
-
-			if (LOWORD(wParam) == WA_CLICKACTIVE)
-				::SetWindowPos(g_singleWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-			break;
-		}
 	case WM_NCPAINT:
 		{
 			HDC dc = ::GetWindowDC(hwnd);

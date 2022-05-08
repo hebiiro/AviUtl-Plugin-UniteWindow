@@ -13,6 +13,7 @@ void SettingDialog::init(HWND hwnd)
 
 	DWORD style = ::GetWindowLong(m_hwnd, GWL_STYLE);
 	style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+	style |= WS_CHILD;
 	::SetWindowLong(m_hwnd, GWL_STYLE, style);
 #if 0
 	DWORD exStyle = ::GetWindowLong(m_hwnd, GWL_EXSTYLE);
@@ -153,15 +154,6 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 {
 	switch (message)
 	{
-	case WM_ACTIVATE:
-		{
-			MY_TRACE(_T("SettingDialogProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
-
-			if (LOWORD(wParam) == WA_CLICKACTIVE)
-				::SetWindowPos(g_singleWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-			break;
-		}
 	case WM_GETMINMAXINFO:
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_GETMINMAXINFO)\n"));

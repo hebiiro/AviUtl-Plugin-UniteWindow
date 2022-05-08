@@ -57,8 +57,11 @@ void initHook()
 	DetourUpdateThread(::GetCurrentThread());
 
 	ATTACH_HOOK_PROC(CreateWindowExA);
+	ATTACH_HOOK_PROC(GetMenu);
+	ATTACH_HOOK_PROC(SetMenu);
 	ATTACH_HOOK_PROC(FindWindowExA);
 	ATTACH_HOOK_PROC(FindWindowW);
+	ATTACH_HOOK_PROC(GetWindow);
 	ATTACH_HOOK_PROC(EnumThreadWindows);
 	ATTACH_HOOK_PROC(EnumWindows);
 
@@ -95,7 +98,7 @@ HWND createSingleWindow()
 		0,
 		_T("AviUtl"),
 		_T("UniteWindow"),
-		WS_VISIBLE |
+//		WS_VISIBLE |
 		WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME |
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -807,6 +810,12 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 {
 	switch (message)
 	{
+	case WM_COMMAND:
+		{
+			MY_TRACE(_T("singleWindowProc(WM_COMMAND)\n"));
+
+			return ::SendMessage(g_aviutlWindow.m_hwnd, message, wParam, lParam);
+		}
 	case WM_SYSCOMMAND:
 		{
 			MY_TRACE(_T("singleWindowProc(WM_SYSCOMMAND)\n"));
@@ -909,15 +918,6 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			EndPaint(hwnd, &ps);
 			return 0;
-		}
-	case WM_NCACTIVATE:
-		{
-			MY_TRACE(_T("singleWindowProc(WM_NCACTIVATE, %d, 0x%08X)\n"), wParam, lParam);
-
-			if (isDescendants(hwnd, (HWND)lParam))
-				return ::DefWindowProc(hwnd, message, TRUE, 0);
-
-			break;
 		}
 	case WM_SIZE:
 		{
@@ -1067,6 +1067,14 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			break;
 		}
+	case WindowMessage::WM_POST_INIT:
+		{
+			recalcLayout();
+			::SetForegroundWindow(hwnd);
+			::SetActiveWindow(hwnd);
+
+			break;
+		}
 	}
 
 	return ::DefWindowProc(hwnd, message, wParam, lParam);
@@ -1087,6 +1095,8 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 		g_singleWindow = createSingleWindow();
 
 		loadConfig();
+		if (!::IsWindowVisible(g_singleWindow))
+			::ShowWindow(g_singleWindow, SW_SHOW);
 
 //		parent = g_singleWindow;
 	}
@@ -1111,12 +1121,38 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 	{
 		g_settingDialog.init(hwnd);
 
-		recalcLayout();
-
-		::SetForegroundWindow(g_singleWindow);
+		::PostMessage(g_singleWindow, WindowMessage::WM_POST_INIT, 0, 0);
 	}
 
 	return hwnd;
+}
+
+IMPLEMENT_HOOK_PROC(HMENU, WINAPI, GetMenu, (HWND hwnd))
+{
+	MY_TRACE(_T("GetMenu(0x%08X)\n"), hwnd);
+
+	if (hwnd == g_aviutlWindow.m_hwnd)
+	{
+		MY_TRACE(_T("ウィンドウを偽装します\n"));
+
+		hwnd = g_singleWindow;
+	}
+
+	return true_GetMenu(hwnd);
+}
+
+IMPLEMENT_HOOK_PROC(BOOL, WINAPI, SetMenu, (HWND hwnd, HMENU menu))
+{
+	MY_TRACE(_T("SetMenu(0x%08X, 0x%08X)\n"), hwnd, menu);
+
+	if (hwnd == g_aviutlWindow.m_hwnd)
+	{
+		MY_TRACE(_T("ウィンドウを偽装します\n"));
+
+		hwnd = g_singleWindow;
+	}
+
+	return true_SetMenu(hwnd, menu);
 }
 
 IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, LPCSTR className, LPCSTR windowName))
@@ -1140,6 +1176,18 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windo
 
 	return true_FindWindowW(className, windowName);
 }
+
+IMPLEMENT_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd))
+{
+//	MY_TRACE(_T("GetWindow(0x%08X, %d)\n"), hwnd, cmd);
+//	MY_TRACE_HWND(hwnd);
+
+	if (hwnd == g_settingDialog.m_hwnd && cmd == GW_OWNER)
+		return g_exeditWindow.m_hwnd;
+
+	return true_GetWindow(hwnd, cmd);
+}
+
 IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumThreadWindows, (DWORD threadId, WNDENUMPROC enumProc, LPARAM lParam))
 {
 	MY_TRACE(_T("EnumThreadWindows(%d, 0x%08X, 0x%08X)\n"), threadId, enumProc, lParam);

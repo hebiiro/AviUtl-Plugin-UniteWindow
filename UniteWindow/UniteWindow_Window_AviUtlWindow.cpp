@@ -12,7 +12,8 @@ void AviUtlWindow::init(HWND hwnd)
 	::SetParent(m_hwnd, m_hwndContainer);
 
 	DWORD style = ::GetWindowLong(m_hwnd, GWL_STYLE);
-	style &= ~(WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+	style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+	style |= WS_CHILD;
 	::SetWindowLong(m_hwnd, GWL_STYLE, style);
 #if 0
 	DWORD exStyle = ::GetWindowLong(m_hwnd, GWL_EXSTYLE);
@@ -24,6 +25,10 @@ void AviUtlWindow::init(HWND hwnd)
 
 	g_aviutlWindowProc = (WNDPROC)::SetWindowLongPtr(
 		m_hwnd, GWLP_WNDPROC, (LONG_PTR)aviutlWindowProc);
+
+	HICON icon = (HICON)::GetClassLong(m_hwnd, GCL_HICON);
+	::SetClassLong(g_singleWindow, GCL_HICON, (LONG)icon);
+	::SetClassLong(g_singleWindow, GCL_HICONSM, (LONG)icon);
 }
 
 LRESULT CALLBACK AviUtlWindow::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -53,12 +58,6 @@ LRESULT CALLBACK AviUtlWindow::containerWndProc(HWND hwnd, UINT message, WPARAM 
 			rc.right += rcWindow.right - rcClient.right;
 			rc.bottom += rcWindow.bottom - rcClient.bottom;
 
-			int a = ::GetThemeSysSize(g_theme, SM_CYMENUSIZE);
-			int b = ::GetSystemMetrics(SM_CYCAPTION);;
-			int c = ::GetThemeSysSize(g_theme, SM_CYSIZE);
-
-			rc.top += a;
-
 			int x = rc.left;
 			int y = rc.top;
 			int w = rc.right - rc.left;
@@ -85,24 +84,9 @@ LRESULT CALLBACK aviutlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			break;
 		}
-	case WM_NCACTIVATE:
-		{
-			MY_TRACE(_T("aviutlWindowProc(WM_NCACTIVATE, %d, 0x%08X)\n"), wParam, lParam);
-
-			return ::DefWindowProc(hwnd, message, TRUE, 0);
-		}
-	case WM_ACTIVATE:
-		{
-			MY_TRACE(_T("aviutlWindowProc(WM_ACTIVATE, 0x%08X, 0x%08X)\n"), wParam, lParam);
-
-			if (LOWORD(wParam) == WA_CLICKACTIVE)
-				::SetWindowPos(g_singleWindow, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-			break;
-		}
 	case WM_SETTEXT:
 		{
-			MY_TRACE(_T("aviutlWindowProc(WM_SETTEXT)\n"));
+//			MY_TRACE(_T("aviutlWindowProc(WM_SETTEXT)\n"));
 
 			::InvalidateRect(g_singleWindow, 0, FALSE);
 
