@@ -96,6 +96,18 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 {
 	switch (message)
 	{
+	case WM_SETFOCUS:
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		{
+			::SetFocus(g_settingDialog.m_hwnd);
+
+			break;
+		}
+	}
+
+	switch (message)
+	{
 	case WM_PAINT:
 		{
 			PAINTSTRUCT ps = {};
@@ -142,8 +154,10 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 		{
 			MY_TRACE(_T("SettingDialog::containerWndProc(WM_MOUSEWHEEL, %d)\n"), wParam);
 
-			// 設定ダイアログにメッセージを転送する。
-			return ::SendMessage(g_settingDialog.m_hwnd, message, wParam, lParam);
+			g_settingDialog.scroll(SB_VERT, ((int)wParam > 0) ? SB_PAGEUP : SB_PAGEDOWN);
+			g_settingDialog.recalcLayout();
+
+			break;
 		}
 	}
 
@@ -173,27 +187,17 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 
 			break;
 		}
-#if 0
-	case WM_HSCROLL:
+	case WM_SETFOCUS:
+	case WM_KILLFOCUS:
 		{
-			MY_TRACE(_T("SettingDialogProc(WM_HSCROLL, 0x%08X, 0x%08X)\n"), wParam, lParam);
-
-			WORD lo = LOWORD(wParam);
-			WORD hi = HIWORD(wParam);
-
-			// 設定ダイアログが SB_THUMBPOSITION に反応しない場合があるので SB_THUMBTRACK も送る。
-			if (lo == SB_THUMBPOSITION)
-				::SendMessage(hwnd, message, MAKEWPARAM(SB_THUMBTRACK, hi), lParam);
+			::InvalidateRect(g_singleWindow, 0, FALSE);
 
 			break;
 		}
-#endif
-	case WM_MOUSEWHEEL:
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
 		{
-			MY_TRACE(_T("SettingDialogProc(WM_MOUSEWHEEL, %d)\n"), wParam);
-
-			g_settingDialog.scroll(SB_VERT, ((int)wParam > 0) ? SB_PAGEUP : SB_PAGEDOWN);
-			g_settingDialog.recalcLayout();
+			::SetFocus(hwnd);
 
 			break;
 		}

@@ -67,6 +67,14 @@ LRESULT CALLBACK AviUtlWindow::containerWndProc(HWND hwnd, UINT message, WPARAM 
 
 			break;
 		}
+	case WM_SETFOCUS:
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		{
+			::SetFocus(g_aviutlWindow.m_hwnd);
+
+			break;
+		}
 	}
 
 	return ::DefWindowProc(hwnd, message, wParam, lParam);
@@ -104,6 +112,20 @@ LRESULT CALLBACK aviutlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			}
 			::StringCbCatA(fileName, sizeof(fileName), " - AviUtl");
 			::SetWindowTextA(g_singleWindow, fileName);
+
+			break;
+		}
+	case WM_SETFOCUS:
+	case WM_KILLFOCUS:
+		{
+			::InvalidateRect(g_singleWindow, 0, FALSE);
+
+			break;
+		}
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		{
+			::SetFocus(hwnd);
 
 			break;
 		}

@@ -38,9 +38,13 @@ int g_hotBorder = HotBorder::none;
 int g_borderWidth = 8;
 int g_captionHeight = 24;
 int g_borderSnapRange = 8;
-COLORREF g_fillColor = RGB(0x55, 0x55, 0x55);
-COLORREF g_borderColor = RGB(0x66, 0x66, 0x66);
-COLORREF g_hotBorderColor = RGB(0x77, 0x77, 0x77);
+COLORREF g_fillColor = RGB(0x99, 0x99, 0x99);
+COLORREF g_borderColor = RGB(0xcc, 0xcc, 0xcc);
+COLORREF g_hotBorderColor = RGB(0x00, 0x00, 0x00);
+COLORREF g_activeCaptionColor = ::GetSysColor(COLOR_HIGHLIGHT);
+COLORREF g_activeCaptionTextColor = RGB(0xff, 0xff, 0xff);
+COLORREF g_inactiveCaptionColor = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+COLORREF g_inactiveCaptionTextColor = RGB(0x00, 0x00, 0x00);
 
 int g_offset = 0; // ドラッグ処理に使う。
 
@@ -534,7 +538,7 @@ void dragBorder(POINT point)
 	}
 }
 
-BOOL getHotBorderRect(LPRECT rc)
+BOOL getBorderRect(LPRECT rc, int border)
 {
 	RECT rcClient; ::GetClientRect(g_singleWindow, &rcClient);
 	int borderVertCenter = borderToX(&rcClient, g_borders.m_vertCenter, g_borders.m_vertCenterOrigin);
@@ -544,35 +548,8 @@ BOOL getHotBorderRect(LPRECT rc)
 	int borderHorzTop = borderToX(&rcClient, g_borders.m_horzTop, g_borders.m_horzTopOrigin);
 	int borderHorzBottom = borderToX(&rcClient, g_borders.m_horzBottom, g_borders.m_horzBottomOrigin);
 
-	switch (g_hotBorder)
+	switch (border)
 	{
-	case HotBorder::horzCenter:
-		{
-			rc->left = rcClient.left;
-			rc->top = borderHorzCenter;
-			rc->right = rcClient.right;
-			rc->bottom = borderHorzCenter + g_borderWidth;
-
-			return TRUE;
-		}
-	case HotBorder::horzTop:
-		{
-			rc->left = borderHorzTop;
-			rc->top = rcClient.top;
-			rc->right = borderHorzTop + g_borderWidth;
-			rc->bottom = borderHorzCenter;
-
-			return TRUE;
-		}
-	case HotBorder::horzBottom:
-		{
-			rc->left = borderHorzBottom;
-			rc->top = borderHorzCenter + g_borderWidth;
-			rc->right = borderHorzBottom + g_borderWidth;
-			rc->bottom = rcClient.bottom;
-
-			return TRUE;
-		}
 	case HotBorder::vertCenter:
 		{
 			rc->left = borderVertCenter;
@@ -600,6 +577,33 @@ BOOL getHotBorderRect(LPRECT rc)
 
 			return TRUE;
 		}
+	case HotBorder::horzCenter:
+		{
+			rc->left = rcClient.left;
+			rc->top = borderHorzCenter;
+			rc->right = rcClient.right;
+			rc->bottom = borderHorzCenter + g_borderWidth;
+
+			return TRUE;
+		}
+	case HotBorder::horzTop:
+		{
+			rc->left = borderHorzTop;
+			rc->top = rcClient.top;
+			rc->right = borderHorzTop + g_borderWidth;
+			rc->bottom = borderHorzCenter;
+
+			return TRUE;
+		}
+	case HotBorder::horzBottom:
+		{
+			rc->left = borderHorzBottom;
+			rc->top = borderHorzCenter + g_borderWidth;
+			rc->right = borderHorzBottom + g_borderWidth;
+			rc->bottom = rcClient.bottom;
+
+			return TRUE;
+		}
 	}
 
 	return FALSE;
@@ -607,42 +611,44 @@ BOOL getHotBorderRect(LPRECT rc)
 
 void drawCaption(HDC dc, HWND hwnd, Window* window)
 {
+	// コンテナウィンドウの矩形を取得する。
 	RECT rc; ::GetWindowRect(window->m_hwndContainer, &rc);
 
 	if ((rc.bottom - rc.top) <= 0)
 		return; // ウィンドウの高さが小さすぎる場合は何もしない。
 
+	// コンテナウィンドウの上隣にあるキャプション矩形を取得する。
 	::MapWindowPoints(0, hwnd, (POINT*)&rc, 2);
 	rc.bottom = rc.top - 1;
 	rc.top = rc.top - g_captionHeight;
 
+	// フォーカスを持っているか調べる。
+	HWND focus = ::GetFocus();
+	BOOL hasFocus = window->m_hwnd == focus;
+	COLORREF fillColor = hasFocus ? g_activeCaptionColor : g_inactiveCaptionColor;
+	COLORREF textColor = hasFocus ? g_activeCaptionTextColor : g_inactiveCaptionTextColor;
+
+	// 背景を塗りつぶす。
+	HBRUSH brush = ::CreateSolidBrush(fillColor);
+	::FillRect(dc, &rc, brush);
+	::DeleteObject(brush);
+
+	// ウィンドウテキストを取得する。
 	WCHAR text[MAX_PATH] = {};
 	::GetWindowTextW(window->m_hwnd, text, MAX_PATH);
 
-	::DrawThemeBackground(g_theme, dc, MENU_BARBACKGROUND, MBI_NORMAL, &rc, 0);
-	::DrawThemeText(g_theme, dc, MENU_BARITEM, MBI_NORMAL,
-		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
+	// ウィンドウテキストを描画する。
+	int oldBkMode = ::SetBkMode(dc, TRANSPARENT);
+	COLORREF oldTextColor = ::SetTextColor(dc, textColor);
+	::DrawTextW(dc, text, ::lstrlenW(text), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	::SetTextColor(dc, oldTextColor);
+	::SetBkMode(dc, oldBkMode);
+
+//	::DrawThemeText(g_theme, dc, MENU_BARITEM, MBI_NORMAL,
+//		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
 }
 
 //---------------------------------------------------------------------
-
-BOOL isDescendants(HWND hwnd, HWND target)
-{
-	MY_TRACE(_T("isDescendants(0x%08X, 0x%08X)\n"), hwnd, target);
-
-	while (target)
-	{
-		if (target == hwnd)
-			return TRUE;
-
-		target = (HWND)::GetWindowLongPtr(target, GWLP_HWNDPARENT);
-//		target = ::GetParent(target);
-//		target = ::GetWindow(target, GW_OWNER);
-		MY_TRACE_HWND(target);
-	}
-
-	return FALSE;
-}
 
 int getComboBoxIndexFromWindow(Window* window)
 {
@@ -878,42 +884,82 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			return ::SendMessage(g_aviutlWindow.m_hwnd, message, wParam, lParam);
 		}
+	case WM_SETFOCUS:
+		{
+			MY_TRACE(_T("singleWindowProc(WM_SETFOCUS)\n"));
+
+			::SetFocus(g_aviutlWindow.m_hwnd);
+
+			break;
+		}
 	case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
 			HDC dc = ::BeginPaint(hwnd, &ps);
+			RECT rc = ps.rcPaint;
 
-			{
-				HBRUSH brush = ::CreateSolidBrush(g_fillColor);
-				FillRect(dc, &ps.rcPaint, brush);
-				::DeleteObject(brush);
-			}
+			BP_PAINTPARAMS pp = { sizeof(pp) };
+			HDC mdc = 0;
+			HPAINTBUFFER pb = ::BeginBufferedPaint(dc, &rc, BPBF_COMPATIBLEBITMAP, &pp, &mdc);
 
+			if (pb)
 			{
-				// ホットボーダーを描画する。
-				RECT rcHotBorder;
-				if (getHotBorderRect(&rcHotBorder))
+				HDC dc = mdc;
+
 				{
-					HBRUSH brush = ::CreateSolidBrush(g_hotBorderColor);
-					::FillRect(dc, &rcHotBorder, brush);
+					// 背景を塗りつぶす。
+
+					HBRUSH brush = ::CreateSolidBrush(g_fillColor);
+					FillRect(dc, &rc, brush);
 					::DeleteObject(brush);
 				}
-			}
 
-			{
-				// 各ウィンドウのキャプションを描画する。
+				{
+					// ボーダーを描画する。
 
-				LOGFONTW lf = {};
-				::GetThemeSysFont(g_theme, TMT_CAPTIONFONT, &lf);
-				HFONT font = ::CreateFontIndirectW(&lf);
-				HFONT oldFont = (HFONT)::SelectObject(dc, font);
+					HBRUSH brush = ::CreateSolidBrush(g_borderColor);
 
-				drawCaption(dc, hwnd, &g_aviutlWindow);
-				drawCaption(dc, hwnd, &g_exeditWindow);
-				drawCaption(dc, hwnd, &g_settingDialog);
+					int firstBorder = (g_layoutMode == LayoutMode::vertSplit) ? HotBorder::vertCenter : HotBorder::horzCenter;
+					for (int i = 0; i < 3; i++)
+					{
+						int border = firstBorder + i;
+						if (border == g_hotBorder) continue;
+						RECT rcBorder;
+						if (getBorderRect(&rcBorder, border))
+							::FillRect(dc, &rcBorder, brush);
+					}
 
-				::SelectObject(dc, oldFont);
-				::DeleteObject(font);
+					::DeleteObject(brush);
+				}
+
+				{
+					// ホットボーダーを描画する。
+					RECT rcHotBorder;
+					if (getBorderRect(&rcHotBorder, g_hotBorder))
+					{
+						HBRUSH brush = ::CreateSolidBrush(g_hotBorderColor);
+						::FillRect(dc, &rcHotBorder, brush);
+						::DeleteObject(brush);
+					}
+				}
+
+				{
+					// 各ウィンドウのキャプションを描画する。
+
+					LOGFONTW lf = {};
+					::GetThemeSysFont(g_theme, TMT_CAPTIONFONT, &lf);
+					HFONT font = ::CreateFontIndirectW(&lf);
+					HFONT oldFont = (HFONT)::SelectObject(dc, font);
+
+					drawCaption(dc, hwnd, &g_aviutlWindow);
+					drawCaption(dc, hwnd, &g_exeditWindow);
+					drawCaption(dc, hwnd, &g_settingDialog);
+
+					::SelectObject(dc, oldFont);
+					::DeleteObject(font);
+				}
+
+				::EndBufferedPaint(pb, TRUE);
 			}
 
 			EndPaint(hwnd, &ps);
@@ -1182,8 +1228,19 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd))
 //	MY_TRACE(_T("GetWindow(0x%08X, %d)\n"), hwnd, cmd);
 //	MY_TRACE_HWND(hwnd);
 
-	if (hwnd == g_settingDialog.m_hwnd && cmd == GW_OWNER)
-		return g_exeditWindow.m_hwnd;
+	if (cmd == GW_OWNER)
+	{
+		if (hwnd == g_exeditWindow.m_hwnd)
+		{
+			// 拡張編集ウィンドウのオーナーウィンドウは AviUtl ウィンドウ。
+			return g_aviutlWindow.m_hwnd;
+		}
+		else if (hwnd == g_settingDialog.m_hwnd)
+		{
+			// 設定ダイアログのオーナーウィンドウは拡張編集ウィンドウ。
+			return g_exeditWindow.m_hwnd;
+		}
+	}
 
 	return true_GetWindow(hwnd, cmd);
 }

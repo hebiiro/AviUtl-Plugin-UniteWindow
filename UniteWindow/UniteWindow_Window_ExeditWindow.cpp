@@ -69,6 +69,14 @@ LRESULT CALLBACK ExeditWindow::containerWndProc(HWND hwnd, UINT message, WPARAM 
 
 			break;
 		}
+	case WM_SETFOCUS:
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		{
+			::SetFocus(g_exeditWindow.m_hwnd);
+
+			break;
+		}
 	}
 
 	return ::DefWindowProc(hwnd, message, wParam, lParam);
@@ -87,6 +95,20 @@ LRESULT CALLBACK exeditWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			if (brush) ::FillRect(dc, &rc, brush);
 			::ReleaseDC(hwnd, dc);
 			return 0;
+		}
+	case WM_SETFOCUS:
+	case WM_KILLFOCUS:
+		{
+			::InvalidateRect(g_singleWindow, 0, FALSE);
+
+			break;
+		}
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		{
+			::SetFocus(hwnd);
+
+			break;
 		}
 	}
 
