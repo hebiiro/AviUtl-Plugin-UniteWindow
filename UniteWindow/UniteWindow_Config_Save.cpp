@@ -34,6 +34,10 @@ HRESULT saveConfig(LPCWSTR fileName, BOOL _export)
 			setPrivateProfileColor(element, L"fillColor", g_fillColor);
 			setPrivateProfileColor(element, L"borderColor", g_borderColor);
 			setPrivateProfileColor(element, L"hotBorderColor", g_hotBorderColor);
+			setPrivateProfileColor(element, L"activeCaptionColor", g_activeCaptionColor);
+			setPrivateProfileColor(element, L"activeCaptionTextColor", g_activeCaptionTextColor);
+			setPrivateProfileColor(element, L"inactiveCaptionColor", g_inactiveCaptionColor);
+			setPrivateProfileColor(element, L"inactiveCaptionTextColor", g_inactiveCaptionTextColor);
 		}
 
 		// ウィンドウ位置を保存する。
