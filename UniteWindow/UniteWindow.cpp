@@ -1289,6 +1289,40 @@ COLORREF WINAPI Dropper_GetPixel(HDC dc, int x, int y)
 	return color;
 }
 
+BOOL isAncestor(HWND hwnd, HWND child)
+{
+	while (child)
+	{
+		if (child == hwnd)
+			return TRUE;
+
+		child = ::GetParent(child);
+	}
+
+	return FALSE;
+}
+
+HWND WINAPI KeyboardHook_GetActiveWindow()
+{
+	MY_TRACE(_T("KeyboardHook_GetActiveWindow()\n"));
+
+	HWND focus = ::GetFocus();
+
+	if (isAncestor(g_settingDialog.m_hwnd, focus))
+	{
+		MY_TRACE(_T("設定ダイアログを返します\n"));
+		return g_settingDialog.m_hwnd;
+	}
+
+	if (isAncestor(g_exeditWindow.m_hwnd, focus))
+	{
+		MY_TRACE(_T("拡張編集ウィンドウを返します\n"));
+		return g_exeditWindow.m_hwnd;
+	}
+
+	return ::GetActiveWindow();
+}
+
 //---------------------------------------------------------------------
 
 EXTERN_C BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)

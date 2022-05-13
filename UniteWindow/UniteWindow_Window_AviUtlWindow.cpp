@@ -105,6 +105,9 @@ LRESULT CALLBACK aviutlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			{
 				::StringCbCopyA(fileName, sizeof(fileName), editp->project_filename);
 				::PathStripPathA(fileName);
+
+				if (::lstrlenA(fileName) == 0)
+					::StringCbCopyA(fileName, sizeof(fileName), (LPCSTR)lParam);
 			}
 			else
 			{

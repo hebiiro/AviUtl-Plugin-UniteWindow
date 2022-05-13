@@ -28,6 +28,15 @@ void ExeditWindow::init(HWND hwnd)
 
 	DWORD exedit = (DWORD)::GetModuleHandle(_T("exedit.auf"));
 	hookAbsoluteCall(exedit + 0x22128, Dropper_GetPixel);
+
+	{
+		BYTE code[6];
+		code[0] = (BYTE)0x90; // NOP
+		code[1] = (BYTE)0xBD; // MOV EBP,DWORD
+		*(DWORD*)&code[2] = (DWORD)KeyboardHook_GetActiveWindow;
+
+		writeCode(exedit + 0x30D0E, code, sizeof(code));
+	}
 }
 
 LRESULT CALLBACK ExeditWindow::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
