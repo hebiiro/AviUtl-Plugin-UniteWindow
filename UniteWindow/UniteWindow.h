@@ -212,6 +212,7 @@ DECLARE_HOOK_PROC(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT message, 
 DECLARE_HOOK_PROC(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR className, LPCSTR windowName, DWORD style, int x, int y, int w, int h, HWND parent, HMENU menu, HINSTANCE instance, LPVOID param));
 DECLARE_HOOK_PROC(HMENU, WINAPI, GetMenu, (HWND hwnd));
 DECLARE_HOOK_PROC(BOOL, WINAPI, SetMenu, (HWND hwnd, HMENU menu));
+DECLARE_HOOK_PROC(BOOL, WINAPI, DrawMenuBar, (HWND hwnd));
 DECLARE_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, LPCSTR className, LPCSTR windowName));
 DECLARE_HOOK_PROC(HWND, WINAPI, FindWindowW, (LPCWSTR className, LPCWSTR windowName));
 DECLARE_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd));

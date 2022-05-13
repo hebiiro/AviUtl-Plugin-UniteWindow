@@ -63,6 +63,7 @@ void initHook()
 	ATTACH_HOOK_PROC(CreateWindowExA);
 	ATTACH_HOOK_PROC(GetMenu);
 	ATTACH_HOOK_PROC(SetMenu);
+	ATTACH_HOOK_PROC(DrawMenuBar);
 	ATTACH_HOOK_PROC(FindWindowExA);
 	ATTACH_HOOK_PROC(FindWindowW);
 	ATTACH_HOOK_PROC(GetWindow);
@@ -1199,6 +1200,20 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, SetMenu, (HWND hwnd, HMENU menu))
 	}
 
 	return true_SetMenu(hwnd, menu);
+}
+
+IMPLEMENT_HOOK_PROC(BOOL, WINAPI, DrawMenuBar, (HWND hwnd))
+{
+	MY_TRACE(_T("DrawMenuBar(0x%08X)\n"), hwnd);
+
+	if (hwnd == g_aviutlWindow.m_hwnd)
+	{
+		MY_TRACE(_T("ウィンドウを偽装します\n"));
+
+		hwnd = g_singleWindow;
+	}
+
+	return true_DrawMenuBar(hwnd);
 }
 
 IMPLEMENT_HOOK_PROC(HWND, WINAPI, FindWindowExA, (HWND parent, HWND childAfter, LPCSTR className, LPCSTR windowName))
