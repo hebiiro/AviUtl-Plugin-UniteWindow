@@ -1,5 +1,6 @@
 # AviUtl プラグイン - UniteWindow
 
+* 3.0.4 - 2022/05/19 「スクリプト並べ替え管理」「シークバー＋」が動作しない問題を修正
 * 3.0.3 - 2022/05/13 メニューが再描画されない問題を修正
 * 3.0.2 - 2022/05/13 設定ダイアログでエンターキーが効かない問題を修正
 * 3.0.1 - 2022/05/11 タイトルの色が読み込まれない問題を修正
@@ -24,6 +25,10 @@
 AviUtl のウィンドウを結合してシングルウィンドウにまとめます。
 
 ![UniteWindow 1 0 0](https://user-images.githubusercontent.com/96464759/166472528-057c3fff-f724-40d2-9692-8a647e966f80.jpg)
+
+## 免責事項
+
+このプラグインおよび同梱物を使用したことによって生じたすべての障害・損害・不具合等に関しては、私と私の関係者および私の所属するいかなる団体・組織とも、一切の責任を負いません。各自の責任においてご使用ください。
 
 ## ダウンロード
 
@@ -126,3 +131,9 @@ UniteWindow.xml をテキストエディタで開いて編集します。
 * Microsoft Research Detours Package https://github.com/microsoft/Detours
 * aviutl_exedit_sdk https://github.com/ePi5131/aviutl_exedit_sdk
 * Common Library https://github.com/hebiiro/Common-Library
+
+# 作成者情報
+ 
+* 作成者 - 蛇色 (へびいろ)
+* GitHub - https://github.com/hebiiro
+* Twitter - https://twitter.com/io_hebiiro

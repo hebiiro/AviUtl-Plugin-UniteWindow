@@ -1170,6 +1170,12 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 
 		::PostMessage(g_singleWindow, WindowMessage::WM_POST_INIT, 0, 0);
 	}
+	else if (::lstrcmpiA(className, "AviUtl") == 0 && parent == g_aviutlWindow.m_hwnd)
+	{
+		// 「スクリプト並べ替え管理」「シークバー＋」用。
+		// ::GetWindow(fp->hwnd, GW_OWNER) が AviUtl ウィンドウを返すようにする。
+		::SetWindowLong(hwnd, GWL_HWNDPARENT, (LONG)g_aviutlWindow.m_hwnd);
+	}
 
 	return hwnd;
 }
