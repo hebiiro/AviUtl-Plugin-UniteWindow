@@ -69,7 +69,6 @@ void initHook()
 	ATTACH_HOOK_PROC(GetWindow);
 	ATTACH_HOOK_PROC(EnumThreadWindows);
 	ATTACH_HOOK_PROC(EnumWindows);
-
 	if (DetourTransactionCommit() == NO_ERROR)
 	{
 		MY_TRACE(_T("API フックに成功しました\n"));
@@ -1170,13 +1169,14 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 
 		::PostMessage(g_singleWindow, WindowMessage::WM_POST_INIT, 0, 0);
 	}
+#if 0
 	else if (::lstrcmpiA(className, "AviUtl") == 0 && parent == g_aviutlWindow.m_hwnd)
 	{
 		// 「スクリプト並べ替え管理」「シークバー＋」用。
 		// ::GetWindow(fp->hwnd, GW_OWNER) が AviUtl ウィンドウを返すようにする。
 		::SetWindowLong(hwnd, GWL_HWNDPARENT, (LONG)g_aviutlWindow.m_hwnd);
 	}
-
+#endif
 	return hwnd;
 }
 
@@ -1261,6 +1261,18 @@ IMPLEMENT_HOOK_PROC(HWND, WINAPI, GetWindow, (HWND hwnd, UINT cmd))
 			// 設定ダイアログのオーナーウィンドウは拡張編集ウィンドウ。
 			return g_exeditWindow.m_hwnd;
 		}
+#if 1
+		HWND retValue = true_GetWindow(hwnd, cmd);
+
+		if (retValue == g_singleWindow)
+		{
+			// 「スクリプト並べ替え管理」「シークバー＋」などの一般的なプラグイン用。
+			// シングルウィンドウがオーナーになっている場合は AviUtl ウィンドウを返すようにする。
+			return g_aviutlWindow.m_hwnd;
+		}
+
+		return retValue;
+#endif
 	}
 
 	return true_GetWindow(hwnd, cmd);
