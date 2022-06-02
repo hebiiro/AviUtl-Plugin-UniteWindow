@@ -718,7 +718,9 @@ int showConfigDialog(HWND hwnd)
 	ComboBox_SetCurSel(hwndOrigin[4], g_borders.m_horzTopOrigin);
 	ComboBox_SetCurSel(hwndOrigin[5], g_borders.m_horzBottomOrigin);
 
+	::EnableWindow(hwnd, FALSE);
 	int retValue = dialog.doModal();
+	::EnableWindow(hwnd, TRUE);
 
 	if (IDOK != retValue)
 		return retValue;
@@ -1155,7 +1157,7 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 	}
 	else if (::lstrcmpiA(windowName, "拡張編集") == 0)
 	{
-		g_auin.init();
+		g_auin.initExEditAddress();
 
 		true_SettingDialogProc = g_auin.HookSettingDialogProc(hook_SettingDialogProc);
 		MY_TRACE_HEX(true_SettingDialogProc);
@@ -1307,18 +1309,15 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lPa
 	return true_EnumWindows(enumProc, lParam);
 }
 
-COLORREF WINAPI Dropper_GetPixel(HDC dc, int x, int y)
+COLORREF WINAPI Dropper_GetPixel(HDC _dc, int x, int y)
 {
-	MY_TRACE(_T("Dropper_GetPixel(0x%08X, %d, %d)\n"), dc, x, y);
+	MY_TRACE(_T("Dropper_GetPixel(0x%08X, %d, %d)\n"), _dc, x, y);
 
 	POINT point; ::GetCursorPos(&point);
-	HWND hwnd = ::WindowFromPoint(point);
-	RECT rc; ::GetWindowRect(hwnd, &rc);
-	point.x -= rc.left;
-	point.y -= rc.top;
-	HDC dc2 = ::GetWindowDC(hwnd);
-	COLORREF color = ::GetPixel(dc2, point.x, point.y);
-	::ReleaseDC(hwnd, dc2);
+	::LogicalToPhysicalPointForPerMonitorDPI(0, &point);
+	HDC dc = ::GetDC(0);
+	COLORREF color = ::GetPixel(dc, point.x, point.y);
+	::ReleaseDC(0, dc);
 	return color;
 }
 
