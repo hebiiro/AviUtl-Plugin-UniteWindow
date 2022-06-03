@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "UniteWindow.h"
-#include "Resource.h"
+#include "ConfigDialog.h"
 
 //---------------------------------------------------------------------
 
@@ -632,106 +632,6 @@ void drawCaption(HDC dc, HWND hwnd, Window* window)
 }
 
 //---------------------------------------------------------------------
-
-int getComboBoxIndexFromWindow(Window* window)
-{
-	if (window == &g_aviutlWindow) return 0;
-	else if (window == &g_exeditWindow) return 1;
-	else if (window == &g_settingDialog) return 2;
-
-	return 3;
-}
-
-Window* getWindowFromComboBoxIndex(int i)
-{
-	switch (i)
-	{
-	case 0: return &g_aviutlWindow;
-	case 1: return &g_exeditWindow;
-	case 2: return &g_settingDialog;
-	}
-
-	return 0;
-}
-
-int showConfigDialog(HWND hwnd)
-{
-	Dialog dialog(g_instance, MAKEINTRESOURCE(IDD_CONFIG), hwnd);
-
-	HWND hwndLayoutMode = ::GetDlgItem(dialog, IDC_LAYOUT_MODE);
-	ComboBox_AddString(hwndLayoutMode, _T("垂直分割"));
-	ComboBox_AddString(hwndLayoutMode, _T("水平分割"));
-	ComboBox_SetCurSel(hwndLayoutMode, g_layoutMode);
-
-	HWND hwndWindow[WindowPos::maxSize] = {};
-	hwndWindow[WindowPos::topLeft] = ::GetDlgItem(dialog, IDC_WINDOW_TOP_LEFT);
-	hwndWindow[WindowPos::topRight] = ::GetDlgItem(dialog, IDC_WINDOW_TOP_RIGHT);
-	hwndWindow[WindowPos::bottomLeft] = ::GetDlgItem(dialog, IDC_WINDOW_BOTTOM_LEFT);
-	hwndWindow[WindowPos::bottomRight] = ::GetDlgItem(dialog, IDC_WINDOW_BOTTOM_RIGHT);
-	for (int i = 0; i < WindowPos::maxSize; i++)
-	{
-		ComboBox_AddString(hwndWindow[i], _T("AviUtlウィンドウ"));
-		ComboBox_AddString(hwndWindow[i], _T("拡張編集ウィンドウ"));
-		ComboBox_AddString(hwndWindow[i], _T("設定ダイアログ"));
-		ComboBox_AddString(hwndWindow[i], _T("ウィンドウなし"));
-		ComboBox_SetCurSel(hwndWindow[i], getComboBoxIndexFromWindow(g_windowArray[i]));
-	}
-	::SetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, g_borders.m_vertCenter, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_VERT_LEFT, g_borders.m_vertLeft, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_VERT_RIGHT, g_borders.m_vertRight, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, g_borders.m_horzCenter, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_TOP, g_borders.m_horzTop, TRUE);
-	::SetDlgItemInt(dialog, IDC_BORDER_HORZ_BOTTOM, g_borders.m_horzBottom, TRUE);
-	HWND hwndOrigin[6] = {};
-	hwndOrigin[0] = ::GetDlgItem(dialog, IDC_BORDER_VERT_CENTER_ORIGIN);
-	hwndOrigin[1] = ::GetDlgItem(dialog, IDC_BORDER_VERT_LEFT_ORIGIN);
-	hwndOrigin[2] = ::GetDlgItem(dialog, IDC_BORDER_VERT_RIGHT_ORIGIN);
-	hwndOrigin[3] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_CENTER_ORIGIN);
-	hwndOrigin[4] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_TOP_ORIGIN);
-	hwndOrigin[5] = ::GetDlgItem(dialog, IDC_BORDER_HORZ_BOTTOM_ORIGIN);
-	for (int i = 0; i < 6; i++)
-	{
-		ComboBox_AddString(hwndOrigin[i], _T("左上基点"));
-		ComboBox_AddString(hwndOrigin[i], _T("右下基点"));
-	}
-	ComboBox_SetCurSel(hwndOrigin[0], g_borders.m_vertCenterOrigin);
-	ComboBox_SetCurSel(hwndOrigin[1], g_borders.m_vertLeftOrigin);
-	ComboBox_SetCurSel(hwndOrigin[2], g_borders.m_vertRightOrigin);
-	ComboBox_SetCurSel(hwndOrigin[3], g_borders.m_horzCenterOrigin);
-	ComboBox_SetCurSel(hwndOrigin[4], g_borders.m_horzTopOrigin);
-	ComboBox_SetCurSel(hwndOrigin[5], g_borders.m_horzBottomOrigin);
-
-	::EnableWindow(hwnd, FALSE);
-	int retValue = dialog.doModal();
-	::EnableWindow(hwnd, TRUE);
-
-	if (IDOK != retValue)
-		return retValue;
-
-	g_layoutMode = ComboBox_GetCurSel(hwndLayoutMode);
-	for (int i = 0; i < WindowPos::maxSize; i++)
-		g_windowArray[i] = getWindowFromComboBoxIndex(ComboBox_GetCurSel(hwndWindow[i]));
-	g_borders.m_vertCenter = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_CENTER, 0, TRUE);
-	g_borders.m_vertLeft = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_LEFT, 0, TRUE);
-	g_borders.m_vertRight = ::GetDlgItemInt(dialog, IDC_BORDER_VERT_RIGHT, 0, TRUE);
-	g_borders.m_horzCenter = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_CENTER, 0, TRUE);
-	g_borders.m_horzTop = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_TOP, 0, TRUE);
-	g_borders.m_horzBottom = ::GetDlgItemInt(dialog, IDC_BORDER_HORZ_BOTTOM, 0, TRUE);
-	g_borders.m_vertCenterOrigin = ComboBox_GetCurSel(hwndOrigin[0]);
-	g_borders.m_vertLeftOrigin = ComboBox_GetCurSel(hwndOrigin[1]);
-	g_borders.m_vertRightOrigin = ComboBox_GetCurSel(hwndOrigin[2]);
-	g_borders.m_horzCenterOrigin = ComboBox_GetCurSel(hwndOrigin[3]);
-	g_borders.m_horzTopOrigin = ComboBox_GetCurSel(hwndOrigin[4]);
-	g_borders.m_horzBottomOrigin = ComboBox_GetCurSel(hwndOrigin[5]);
-
-	// レイアウトを再計算する。
-	recalcLayout();
-
-	// 再描画する。
-	::InvalidateRect(hwnd, 0, FALSE);
-
-	return retValue;
-}
 
 BOOL importLayout(HWND hwnd)
 {

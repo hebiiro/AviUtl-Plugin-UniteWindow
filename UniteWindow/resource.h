@@ -20,6 +20,9 @@
 #define IDC_BORDER_HORZ_CENTER_ORIGIN   1015
 #define IDC_BORDER_HORZ_TOP_ORIGIN      1016
 #define IDC_BORDER_HORZ_BOTTOM_ORIGIN   1017
+#define IDC_FILL_COLOR                  1018
+#define IDC_BORDER_COLOR                1019
+#define IDC_HOT_BORDER_COLOR            1020
 
 // Next default values for new objects
 // 
@@ -28,7 +31,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1007
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

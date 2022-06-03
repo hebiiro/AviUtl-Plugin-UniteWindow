@@ -189,11 +189,13 @@
     <ClInclude Include="..\..\Common\MSXML.h" />
     <ClInclude Include="..\..\Common\Profile.h" />
     <ClInclude Include="..\..\Common\Tracer.h" />
+    <ClInclude Include="ConfigDialog.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="UniteWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConfigDialog.cpp" />
     <ClCompile Include="UniteWindow.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

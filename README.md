@@ -1,5 +1,6 @@
 # AviUtl プラグイン - UniteWindow
 
+* 3.3.0 - 2022/06/03 コンフィグダイアログでの配色の変更に対応
 * 3.2.0 - 2022/06/03 設定ダイアログの高さをコンテナの高さまで広げるように変更
 * 3.1.0 - 2022/06/03 タイトルの描画方式を変更
 * 3.0.6 - 2022/06/02 スポイトが正しく動作しない問題を修正
@@ -100,10 +101,6 @@ UniteWindow.xml をテキストエディタで開いて編集します。
 	* ```fillColor``` 背景の塗りつぶし色を指定します。
 	* ```borderColor``` ボーダーの色を指定します。
 	* ```hotBorderColor``` ホット状態のボーダーの色を指定します。
-	* ```activeCaptionColor``` アクティブなキャプションの色を指定します。
-	* ```activeCaptionTextColor``` アクティブなキャプションのテキストの色を指定します。
-	* ```inactiveCaptionColor``` 非アクティブなキャプションの色を指定します。
-	* ```inactiveCaptionTextColor``` 非アクティブなキャプションのテキストの色を指定します。
 	* ```<singleWindow>``` シングルウィンドウの位置を指定します。ウィンドウ位置がおかしくなった場合はこのタグを削除してください。
 	* ```<layout>``` レイアウトを指定します。レイアウトがおかしくなった場合はこのタグを削除してください。
 		* ```layoutMode``` ```vertSplit```、```horzSplit``` のいずれかを指定します。
@@ -128,7 +125,7 @@ UniteWindow.xml をテキストエディタで開いて編集します。
 ## 動作確認
 
 * (必須) AviUtl 1.10 & 拡張編集 0.92 http://spring-fragrance.mints.ne.jp/aviutl/
-* (共存確認) patch.aul r21 https://scrapbox.io/ePi5131/patch.aul
+* (共存確認) patch.aul r28 https://scrapbox.io/ePi5131/patch.aul
 
 ## クレジット
 
