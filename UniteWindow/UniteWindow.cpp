@@ -41,10 +41,6 @@ int g_borderSnapRange = 8;
 COLORREF g_fillColor = RGB(0x99, 0x99, 0x99);
 COLORREF g_borderColor = RGB(0xcc, 0xcc, 0xcc);
 COLORREF g_hotBorderColor = RGB(0x00, 0x00, 0x00);
-COLORREF g_activeCaptionColor = ::GetSysColor(COLOR_HIGHLIGHT);
-COLORREF g_activeCaptionTextColor = RGB(0xff, 0xff, 0xff);
-COLORREF g_inactiveCaptionColor = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
-COLORREF g_inactiveCaptionTextColor = RGB(0x00, 0x00, 0x00);
 
 int g_offset = 0; // ドラッグ処理に使う。
 
@@ -619,33 +615,20 @@ void drawCaption(HDC dc, HWND hwnd, Window* window)
 
 	// コンテナウィンドウの上隣にあるキャプション矩形を取得する。
 	::MapWindowPoints(0, hwnd, (POINT*)&rc, 2);
-	rc.bottom = rc.top - 1;
+	rc.bottom = rc.top;
 	rc.top = rc.top - g_captionHeight;
-
-	// フォーカスを持っているか調べる。
-	HWND focus = ::GetFocus();
-	BOOL hasFocus = window->m_hwnd == focus;
-	COLORREF fillColor = hasFocus ? g_activeCaptionColor : g_inactiveCaptionColor;
-	COLORREF textColor = hasFocus ? g_activeCaptionTextColor : g_inactiveCaptionTextColor;
-
-	// 背景を塗りつぶす。
-	HBRUSH brush = ::CreateSolidBrush(fillColor);
-	::FillRect(dc, &rc, brush);
-	::DeleteObject(brush);
 
 	// ウィンドウテキストを取得する。
 	WCHAR text[MAX_PATH] = {};
 	::GetWindowTextW(window->m_hwnd, text, MAX_PATH);
 
-	// ウィンドウテキストを描画する。
-	int oldBkMode = ::SetBkMode(dc, TRANSPARENT);
-	COLORREF oldTextColor = ::SetTextColor(dc, textColor);
-	::DrawTextW(dc, text, ::lstrlenW(text), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-	::SetTextColor(dc, oldTextColor);
-	::SetBkMode(dc, oldBkMode);
+	int stateId = CS_ACTIVE;
+	if (::GetFocus() != window->m_hwnd) stateId = CS_INACTIVE;
+	if (!::IsWindowEnabled(window->m_hwnd)) stateId = CS_DISABLED;
 
-//	::DrawThemeText(g_theme, dc, MENU_BARITEM, MBI_NORMAL,
-//		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
+	::DrawThemeBackground(g_theme, dc, WP_CAPTION, stateId, &rc, 0);
+	::DrawThemeText(g_theme, dc, WP_CAPTION, stateId,
+		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
 }
 
 //---------------------------------------------------------------------
@@ -859,9 +842,7 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		{
 			MY_TRACE(_T("singleWindowProc(WM_CREATE)\n"));
 
-			UINT dpi = ::GetDpiForWindow(hwnd);
-			g_theme = ::OpenThemeDataForDpi(hwnd, VSCLASS_MENU, dpi);
-//			g_theme = ::OpenThemeData(hwnd, VSCLASS_MENU);
+			g_theme = ::OpenThemeData(hwnd, VSCLASS_WINDOW);
 			MY_TRACE_HEX(g_theme);
 
 			HMENU menu = ::GetSystemMenu(hwnd, FALSE);
