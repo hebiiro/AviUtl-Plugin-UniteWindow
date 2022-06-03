@@ -92,6 +92,27 @@ void SettingDialog::recalcLayout()
 		SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
+// 設定ダイアログのサイズをコンテナウィンドウのサイズまで広げる。
+void SettingDialog::extend()
+{
+	RECT rc; ::GetWindowRect(m_hwnd, &rc);
+	RECT rcContainer; ::GetWindowRect(m_hwndContainer, &rcContainer);
+
+	int w = rc.right - rc.left;
+	int h = m_rawWindowSize.cy;
+	int cw = rcContainer.right - rcContainer.left;
+	int ch = rcContainer.bottom - rcContainer.top;
+
+	// 初期化が完全に終わっていないときは何もしない。
+	if (w == 0 || h == 0 || cw == 0 || ch == 0) return;
+
+	// WM_SIZE ハンドラをブロック状態にしてからサイズを変更する。
+	m_blockSizeHandler = TRUE;
+	::SetWindowPos(m_hwnd, 0, 0, 0, w, max(h, ch),
+		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+	m_blockSizeHandler = FALSE;
+}
+
 LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -112,8 +133,9 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 		{
 			PAINTSTRUCT ps = {};
 			HDC dc = ::BeginPaint(hwnd, &ps);
-			HBRUSH brush = (HBRUSH)::SendMessage(hwnd, WM_CTLCOLORDLG, (WPARAM)dc, (LPARAM)hwnd);
-			if (brush) ::FillRect(dc, &ps.rcPaint, brush);
+			HBRUSH brush = ::CreateSolidBrush(g_fillColor);
+			FillRect(dc, &ps.rcPaint, brush);
+			::DeleteObject(brush);
 			::EndPaint(hwnd, &ps);
 			return 0;
 		}
@@ -121,6 +143,8 @@ LRESULT CALLBACK SettingDialog::containerWndProc(HWND hwnd, UINT message, WPARAM
 		{
 			g_settingDialog.updateScrollBar();
 			g_settingDialog.recalcLayout();
+
+			g_settingDialog.extend();
 
 			break;
 		}
@@ -181,9 +205,19 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 		{
 			MY_TRACE(_T("SettingDialogProc(WM_SIZE)\n"));
 
+			// WM_SIZE ハンドラがブロックされているときは何もしない。
+			if (g_settingDialog.m_blockSizeHandler) break;
+
+			// 元のウィンドウ矩形のサイズを取得しておく。
+			RECT rc; ::GetWindowRect(g_settingDialog.m_hwnd, &rc);
+			g_settingDialog.m_rawWindowSize.cx = rc.right - rc.left;
+			g_settingDialog.m_rawWindowSize.cy = rc.bottom - rc.top;
+
 			g_settingDialog.updateScrollBar();
 			g_settingDialog.recalcLayout();
 			::InvalidateRect(g_settingDialog.m_hwndContainer, 0, FALSE);
+
+			g_settingDialog.extend();
 
 			break;
 		}

@@ -32,10 +32,15 @@ public:
 class SettingDialog : public Window
 {
 public:
+
+	BOOL m_blockSizeHandler = FALSE;
+	SIZE m_rawWindowSize = {};
+
 	virtual void init(HWND hwnd);
 	void updateScrollBar();
 	void scroll(int bar, WPARAM wParam);
 	void recalcLayout();
+	void extend();
 	static LRESULT CALLBACK containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 };
 
