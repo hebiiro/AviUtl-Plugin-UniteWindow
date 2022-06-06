@@ -86,23 +86,26 @@ HWND createSingleWindow()
 {
 	MY_TRACE(_T("createSingleWindow()\n"));
 
+	// 土台となるシングルウィンドウを作成する。
+
 	WNDCLASS wc = {};
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wc.hCursor = ::LoadCursor(0, IDC_ARROW);
 	wc.lpfnWndProc = singleWindowProc;
 	wc.hInstance = g_instance;
-	wc.lpszClassName = _T("AviUtl");
+	wc.lpszClassName = _T("AviUtl"); // クラス名を AviUtl に偽装する。「AoiSupport」用。
 	::RegisterClass(&wc);
 
 	HWND hwnd = ::CreateWindowEx(
 		0,
 		_T("AviUtl"),
 		_T("UniteWindow"),
-//		WS_VISIBLE |
 		WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME |
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		0, 0, g_instance, 0);
+
+	// ここでレイアウトの初期値を算出しておく。
 
 	RECT rc; ::GetClientRect(hwnd, &rc);
 	int cx = (rc.left + rc.right) / 2;
@@ -622,10 +625,12 @@ void drawCaption(HDC dc, HWND hwnd, Window* window)
 	WCHAR text[MAX_PATH] = {};
 	::GetWindowTextW(window->m_hwnd, text, MAX_PATH);
 
+	// ウィンドウの状態から stateId を取得する。
 	int stateId = CS_ACTIVE;
 	if (::GetFocus() != window->m_hwnd) stateId = CS_INACTIVE;
 	if (!::IsWindowEnabled(window->m_hwnd)) stateId = CS_DISABLED;
 
+	// テーマ API を使用してタイトルを描画する。
 	::DrawThemeBackground(g_theme, dc, WP_CAPTION, stateId, &rc, 0);
 	::DrawThemeText(g_theme, dc, WP_CAPTION, stateId,
 		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
@@ -817,6 +822,7 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 				{
 					// ホットボーダーを描画する。
+
 					RECT rcHotBorder;
 					if (getBorderRect(&rcHotBorder, g_hotBorder))
 					{
@@ -996,8 +1002,9 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 			break;
 		}
-	case WindowMessage::WM_POST_INIT:
+	case WindowMessage::WM_POST_INIT: // 最後の初期化処理。
 		{
+			// 最初のレイアウト計算。
 			recalcLayout();
 			::SetForegroundWindow(hwnd);
 			::SetActiveWindow(hwnd);
@@ -1013,43 +1020,67 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR className, LPCSTR windowName, DWORD style, int x, int y, int w, int h, HWND parent, HMENU menu, HINSTANCE instance, LPVOID param))
 {
-	if (::lstrcmpiA(className, "AviUtl") == 0 ||
-		::lstrcmpiA(className, "ExtendedFilterClass") == 0)
+	if (!((DWORD)className & 0xFFFF0000UL))
 	{
-		MY_TRACE(_T("CreateWindowExA(%hs, %hs)\n"), className, windowName);
+		// className が ATOM の場合は何もしない。
+		return true_CreateWindowExA(exStyle, className, windowName, style, x, y, w, h, parent, menu, instance, param);
 	}
+
+	// デバッグ用出力。
+	MY_TRACE(_T("CreateWindowExA(%hs, %hs)\n"), className, windowName);
 
 	if (::lstrcmpiA(windowName, "AviUtl") == 0)
 	{
+		// AviUtl ウィンドウが作成される直前のタイミング。
+
+		// 土台となるシングルウィンドウを作成する。
 		g_singleWindow = createSingleWindow();
 
+		// 設定をファイルから読み込む。
 		loadConfig();
+
+		// シングルウィンドウが非表示なら表示する。
 		if (!::IsWindowVisible(g_singleWindow))
 			::ShowWindow(g_singleWindow, SW_SHOW);
-
-//		parent = g_singleWindow;
+	}
+	else if (::lstrcmpiA(className, "AviUtl") == 0 && parent == g_aviutlWindow.m_hwnd)
+	{
+		// AviUtl のポップアップウィンドウの親をシングルウィンドウに変更する。
+		parent = g_singleWindow;
 	}
 
 	HWND hwnd = true_CreateWindowExA(exStyle, className, windowName, style, x, y, w, h, parent, menu, instance, param);
 
 	if (::lstrcmpiA(windowName, "AviUtl") == 0)
 	{
+		// AviUtl ウィンドウに関する初期化処理を行う。
 		g_aviutlWindow.init(hwnd);
 	}
 	else if (::lstrcmpiA(windowName, "拡張編集") == 0)
 	{
+		// 拡張編集が読み込まれたのでアドレスを取得する。
 		g_auin.initExEditAddress();
 
+		// 設定ダイアログのフックを仕掛ける。
 		true_SettingDialogProc = g_auin.HookSettingDialogProc(hook_SettingDialogProc);
 		MY_TRACE_HEX(true_SettingDialogProc);
 		MY_TRACE_HEX(&hook_SettingDialogProc);
 
+		DWORD exedit = g_auin.GetExedit();
+
+		// rikky_memory.auf + rikky_module.dll 用のフック。
+		true_ScriptParamDlgProc = writeAbsoluteAddress(exedit + 0x3454 + 1, hook_ScriptParamDlgProc);
+
+		// 拡張編集ウィンドウに関する初期化処理を行う。
 		g_exeditWindow.init(hwnd);
 	}
 	else if (::lstrcmpiA(windowName, "ExtendedFilter") == 0)
 	{
+		// 設定ダイアログに関する初期化処理を行う。
 		g_settingDialog.init(hwnd);
 
+		// すべてのウィンドウの初期化処理が終わったので
+		// ポストメッセージ先で最初のレイアウト計算を行う。
 		::PostMessage(g_singleWindow, WindowMessage::WM_POST_INIT, 0, 0);
 	}
 #if 0
@@ -1063,13 +1094,18 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 	return hwnd;
 }
 
+/*
+	GetMenu、SetMenu、DrawMenuBar では
+	AviUtl ウィンドウのハンドルが渡されたとき、シングルウィンドウのハンドルに取り替えて偽装する。
+	これによって、AviUtl ウィンドウのメニュー処理がシングルウィンドウに対して行われるようになる。
+*/
 IMPLEMENT_HOOK_PROC(HMENU, WINAPI, GetMenu, (HWND hwnd))
 {
-	MY_TRACE(_T("GetMenu(0x%08X)\n"), hwnd);
+//	MY_TRACE(_T("GetMenu(0x%08X)\n"), hwnd);
 
 	if (hwnd == g_aviutlWindow.m_hwnd)
 	{
-		MY_TRACE(_T("ウィンドウを偽装します\n"));
+//		MY_TRACE(_T("ウィンドウを偽装します\n"));
 
 		hwnd = g_singleWindow;
 	}
@@ -1079,11 +1115,11 @@ IMPLEMENT_HOOK_PROC(HMENU, WINAPI, GetMenu, (HWND hwnd))
 
 IMPLEMENT_HOOK_PROC(BOOL, WINAPI, SetMenu, (HWND hwnd, HMENU menu))
 {
-	MY_TRACE(_T("SetMenu(0x%08X, 0x%08X)\n"), hwnd, menu);
+//	MY_TRACE(_T("SetMenu(0x%08X, 0x%08X)\n"), hwnd, menu);
 
 	if (hwnd == g_aviutlWindow.m_hwnd)
 	{
-		MY_TRACE(_T("ウィンドウを偽装します\n"));
+//		MY_TRACE(_T("ウィンドウを偽装します\n"));
 
 		hwnd = g_singleWindow;
 	}
@@ -1093,11 +1129,11 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, SetMenu, (HWND hwnd, HMENU menu))
 
 IMPLEMENT_HOOK_PROC(BOOL, WINAPI, DrawMenuBar, (HWND hwnd))
 {
-	MY_TRACE(_T("DrawMenuBar(0x%08X)\n"), hwnd);
+//	MY_TRACE(_T("DrawMenuBar(0x%08X)\n"), hwnd);
 
 	if (hwnd == g_aviutlWindow.m_hwnd)
 	{
-		MY_TRACE(_T("ウィンドウを偽装します\n"));
+//		MY_TRACE(_T("ウィンドウを偽装します\n"));
 
 		hwnd = g_singleWindow;
 	}
@@ -1190,9 +1226,29 @@ IMPLEMENT_HOOK_PROC(BOOL, WINAPI, EnumWindows, (WNDENUMPROC enumProc, LPARAM lPa
 	return true_EnumWindows(enumProc, lParam);
 }
 
+IMPLEMENT_HOOK_PROC_NULL(INT_PTR, CALLBACK, ScriptParamDlgProc, (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam))
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		{
+			MY_TRACE(_T("ScriptParamDlgProc(WM_INITDIALOG)\n"));
+
+			// rikky_memory.auf + rikky_module.dll 用。
+			::PostMessage(g_settingDialog.m_hwnd, WM_NCACTIVATE, FALSE, (LPARAM)hwnd);
+
+			break;
+		}
+	}
+
+	return true_ScriptParamDlgProc(hwnd, message, wParam, lParam);
+}
+
 COLORREF WINAPI Dropper_GetPixel(HDC _dc, int x, int y)
 {
 	MY_TRACE(_T("Dropper_GetPixel(0x%08X, %d, %d)\n"), _dc, x, y);
+
+	// すべてのモニタのすべての場所から色を抽出できるようにする。
 
 	POINT point; ::GetCursorPos(&point);
 	::LogicalToPhysicalPointForPerMonitorDPI(0, &point);
