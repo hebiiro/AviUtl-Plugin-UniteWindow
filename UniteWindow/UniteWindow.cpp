@@ -42,6 +42,8 @@ COLORREF g_fillColor = RGB(0x99, 0x99, 0x99);
 COLORREF g_borderColor = RGB(0xcc, 0xcc, 0xcc);
 COLORREF g_hotBorderColor = RGB(0x00, 0x00, 0x00);
 
+RECT g_captionRect[WindowPos::maxSize];
+
 int g_offset = 0; // ドラッグ処理に使う。
 
 //---------------------------------------------------------------------
@@ -251,6 +253,16 @@ int yToBorder(LPCRECT rcClient, int y, int borderOrigin)
 	return 0;
 }
 
+inline RECT getCaptionRectFromContainerRect(const RECT& rcContainer) {
+	return RECT
+	{
+		rcContainer.left,
+		rcContainer.top - g_captionHeight,
+		rcContainer.right,
+		rcContainer.top,
+	};
+}
+
 void recalcLayoutVertSplit()
 {
 	MY_TRACE(_T("recalcLayoutVertSplit()\n"));
@@ -271,6 +283,7 @@ void recalcLayoutVertSplit()
 		};
 
 		g_windowArray[WindowPos::topLeft]->resize(&rcContainer);
+		g_captionRect[WindowPos::topLeft] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::topRight])
@@ -284,6 +297,7 @@ void recalcLayoutVertSplit()
 		};
 
 		g_windowArray[WindowPos::topRight]->resize(&rcContainer);
+		g_captionRect[WindowPos::topRight] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomLeft])
@@ -297,6 +311,7 @@ void recalcLayoutVertSplit()
 		};
 
 		g_windowArray[WindowPos::bottomLeft]->resize(&rcContainer);
+		g_captionRect[WindowPos::bottomLeft] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomRight])
@@ -310,6 +325,7 @@ void recalcLayoutVertSplit()
 		};
 
 		g_windowArray[WindowPos::bottomRight]->resize(&rcContainer);
+		g_captionRect[WindowPos::bottomRight] = getCaptionRectFromContainerRect(rcContainer);
 	}
 }
 
@@ -333,6 +349,7 @@ void recalcLayoutHorzSplit()
 		};
 
 		g_windowArray[WindowPos::topLeft]->resize(&rcContainer);
+		g_captionRect[WindowPos::topLeft] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::topRight])
@@ -346,6 +363,7 @@ void recalcLayoutHorzSplit()
 		};
 
 		g_windowArray[WindowPos::topRight]->resize(&rcContainer);
+		g_captionRect[WindowPos::topRight] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomLeft])
@@ -359,6 +377,7 @@ void recalcLayoutHorzSplit()
 		};
 
 		g_windowArray[WindowPos::bottomLeft]->resize(&rcContainer);
+		g_captionRect[WindowPos::bottomLeft] = getCaptionRectFromContainerRect(rcContainer);
 	}
 
 	if (g_windowArray[WindowPos::bottomRight])
@@ -372,6 +391,7 @@ void recalcLayoutHorzSplit()
 		};
 
 		g_windowArray[WindowPos::bottomRight]->resize(&rcContainer);
+		g_captionRect[WindowPos::bottomRight] = getCaptionRectFromContainerRect(rcContainer);
 	}
 }
 
@@ -913,6 +933,33 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 				// 再描画する。
 				::InvalidateRect(hwnd, 0, FALSE);
+			}
+
+			// キャプションクリック時にウィンドウをアクティブにする
+			for (int i = 0; i < WindowPos::maxSize; i++)
+			{
+				if (g_windowArray[i] != NULL && ::PtInRect(&g_captionRect[i], point))
+				{
+					::SetFocus(g_windowArray[i]->m_hwnd);
+				}
+			}
+
+			break;
+		}
+	case WM_RBUTTONDOWN:
+		{
+			MY_TRACE(_T("singleWindowProc(WM_RBUTTONDOWN)\n"));
+
+			// マウス座標を取得する。
+			POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+
+			// キャプションクリック時にウィンドウをアクティブにする
+			for (int i = 0; i < WindowPos::maxSize; i++)
+			{
+				if (g_windowArray[i] != NULL && ::PtInRect(&g_captionRect[i], point))
+				{
+					::SetFocus(g_windowArray[i]->m_hwnd);
+				}
 			}
 
 			break;

@@ -235,6 +235,12 @@ IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, SettingDialogProc, (HWND hwnd, UINT me
 
 			break;
 		}
+	case WM_MOUSEWHEEL:
+		{
+			// 既定の処理をブロックし、コンテナウィンドウへバイパス
+			::SendMessage(g_settingDialog.m_hwndContainer, message, wParam, lParam);
+			return 0;
+		}
 	}
 
 	return true_SettingDialogProc(hwnd, message, wParam, lParam);
