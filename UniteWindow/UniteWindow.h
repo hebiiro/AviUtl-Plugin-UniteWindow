@@ -22,7 +22,7 @@ public:
 	static LRESULT CALLBACK containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 };
 
-class ExeditWindow : public Window
+class ExEditWindow : public Window
 {
 public:
 	virtual void init(HWND hwnd);
@@ -157,7 +157,7 @@ extern WNDPROC g_aviutlWindowProc;
 extern WNDPROC g_exeditWindowProc;
 
 extern AviUtlWindow g_aviutlWindow;
-extern ExeditWindow g_exeditWindow;
+extern ExEditWindow g_exeditWindow;
 extern SettingDialog g_settingDialog;
 
 extern Window* g_windowArray[WindowPos::maxSize];
@@ -171,6 +171,11 @@ extern int g_borderSnapRange;
 extern COLORREF g_fillColor;
 extern COLORREF g_borderColor;
 extern COLORREF g_hotBorderColor;
+extern COLORREF g_activeCaptionColor;
+extern COLORREF g_activeCaptionTextColor;
+extern COLORREF g_inactiveCaptionColor;
+extern COLORREF g_inactiveCaptionTextColor;
+extern BOOL g_useTheme;
 
 //---------------------------------------------------------------------
 

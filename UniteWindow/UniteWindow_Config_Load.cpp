@@ -41,6 +41,11 @@ HRESULT loadConfig(LPCWSTR fileName, BOOL _import)
 			getPrivateProfileColor(element, L"fillColor", g_fillColor);
 			getPrivateProfileColor(element, L"borderColor", g_borderColor);
 			getPrivateProfileColor(element, L"hotBorderColor", g_hotBorderColor);
+			getPrivateProfileColor(element, L"activeCaptionColor", g_activeCaptionColor);
+			getPrivateProfileColor(element, L"activeCaptionTextColor", g_activeCaptionTextColor);
+			getPrivateProfileColor(element, L"inactiveCaptionColor", g_inactiveCaptionColor);
+			getPrivateProfileColor(element, L"inactiveCaptionTextColor", g_inactiveCaptionTextColor);
+			getPrivateProfileBool(element, L"useTheme", g_useTheme);
 		}
 
 		// ウィンドウ位置を取得する。
@@ -67,7 +72,7 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 	MY_TRACE(_T("loadLayout()\n"));
 
 	// <layout> を読み込む。
-	MSXML2::IXMLDOMNodeListPtr nodeList = element->getElementsByTagName(L"layout");
+	MSXML2::IXMLDOMNodeListPtr nodeList = element->selectNodes(L"layout");
 	int c = nodeList->length;
 	for (int i = 0; i < c; i++)
 	{
@@ -80,7 +85,7 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 
 		{
 			// <window> を読み込む。
-			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->getElementsByTagName(L"window");
+			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->selectNodes(L"window");
 			int c = nodeList->length;
 			for (int i = 0; i < c; i++)
 			{
@@ -98,7 +103,7 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 
 		{
 			// <vertSplit> を読み込む。
-			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->getElementsByTagName(L"vertSplit");
+			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->selectNodes(L"vertSplit");
 			int c = nodeList->length;
 			for (int i = 0; i < c; i++)
 			{
@@ -118,7 +123,7 @@ HRESULT loadLayout(const MSXML2::IXMLDOMElementPtr& element)
 
 		{
 			// <horzSplit> を読み込む。
-			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->getElementsByTagName(L"horzSplit");
+			MSXML2::IXMLDOMNodeListPtr nodeList = layoutElement->selectNodes(L"horzSplit");
 			int c = nodeList->length;
 			for (int i = 0; i < c; i++)
 			{

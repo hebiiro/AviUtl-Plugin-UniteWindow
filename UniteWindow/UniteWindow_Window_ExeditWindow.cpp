@@ -3,11 +3,11 @@
 
 //---------------------------------------------------------------------
 
-void ExeditWindow::init(HWND hwnd)
+void ExEditWindow::init(HWND hwnd)
 {
 	m_hwnd = hwnd;
 	m_hwndContainer = createContainerWindow(
-		hwnd, containerWndProc, _T("UniteWindow.ExeditWindow"));
+		hwnd, containerWndProc, _T("UniteWindow.ExEditWindow"));
 
 	::SetParent(m_hwnd, m_hwndContainer);
 
@@ -39,7 +39,7 @@ void ExeditWindow::init(HWND hwnd)
 	}
 }
 
-LRESULT CALLBACK ExeditWindow::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK ExEditWindow::containerWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{

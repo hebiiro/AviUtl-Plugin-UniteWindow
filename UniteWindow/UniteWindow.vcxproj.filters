@@ -31,9 +31,9 @@
     <ClCompile Include="UniteWindow_Config_Load.cpp" />
     <ClCompile Include="UniteWindow_Config_Save.cpp" />
     <ClCompile Include="UniteWindow_Window_AviUtlWindow.cpp" />
-    <ClCompile Include="UniteWindow_Window_ExeditWindow.cpp" />
     <ClCompile Include="UniteWindow_Window_SettingDialog.cpp" />
     <ClCompile Include="ConfigDialog.cpp" />
+    <ClCompile Include="UniteWindow_Window_ExEditWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="UniteWindow.def" />

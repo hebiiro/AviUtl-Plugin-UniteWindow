@@ -20,7 +20,7 @@ WNDPROC g_aviutlWindowProc = 0;
 WNDPROC g_exeditWindowProc = 0;
 
 AviUtlWindow g_aviutlWindow;
-ExeditWindow g_exeditWindow;
+ExEditWindow g_exeditWindow;
 SettingDialog g_settingDialog;
 
 Window* g_windowArray[WindowPos::maxSize] =
@@ -41,6 +41,11 @@ int g_borderSnapRange = 8;
 COLORREF g_fillColor = RGB(0x99, 0x99, 0x99);
 COLORREF g_borderColor = RGB(0xcc, 0xcc, 0xcc);
 COLORREF g_hotBorderColor = RGB(0x00, 0x00, 0x00);
+COLORREF g_activeCaptionColor = ::GetSysColor(COLOR_HIGHLIGHT);
+COLORREF g_activeCaptionTextColor = RGB(0xff, 0xff, 0xff);
+COLORREF g_inactiveCaptionColor = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+COLORREF g_inactiveCaptionTextColor = RGB(0x00, 0x00, 0x00);
+BOOL g_useTheme = FALSE;
 
 RECT g_captionRect[WindowPos::maxSize];
 
@@ -67,6 +72,7 @@ void initHook()
 	ATTACH_HOOK_PROC(GetWindow);
 	ATTACH_HOOK_PROC(EnumThreadWindows);
 	ATTACH_HOOK_PROC(EnumWindows);
+
 	if (DetourTransactionCommit() == NO_ERROR)
 	{
 		MY_TRACE(_T("API フックに成功しました\n"));
@@ -645,15 +651,39 @@ void drawCaption(HDC dc, HWND hwnd, Window* window)
 	WCHAR text[MAX_PATH] = {};
 	::GetWindowTextW(window->m_hwnd, text, MAX_PATH);
 
-	// ウィンドウの状態から stateId を取得する。
-	int stateId = CS_ACTIVE;
-	if (::GetFocus() != window->m_hwnd) stateId = CS_INACTIVE;
-	if (!::IsWindowEnabled(window->m_hwnd)) stateId = CS_DISABLED;
+	if (g_useTheme)
+	{
+		// ウィンドウの状態から stateId を取得する。
+		int stateId = CS_ACTIVE;
+		if (::GetFocus() != window->m_hwnd) stateId = CS_INACTIVE;
+		if (!::IsWindowEnabled(window->m_hwnd)) stateId = CS_DISABLED;
 
-	// テーマ API を使用してタイトルを描画する。
-	::DrawThemeBackground(g_theme, dc, WP_CAPTION, stateId, &rc, 0);
-	::DrawThemeText(g_theme, dc, WP_CAPTION, stateId,
-		text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
+		// テーマ API を使用してタイトルを描画する。
+		::DrawThemeBackground(g_theme, dc, WP_CAPTION, stateId, &rc, 0);
+		::DrawThemeText(g_theme, dc, WP_CAPTION, stateId,
+			text, ::lstrlenW(text), DT_CENTER | DT_VCENTER | DT_SINGLELINE, 0, &rc);
+	}
+	else
+	{
+		COLORREF captionColor = g_activeCaptionColor;
+		COLORREF captionTextColor = g_activeCaptionTextColor;
+
+		if (::GetFocus() != window->m_hwnd)
+		{
+			captionColor = g_inactiveCaptionColor;
+			captionTextColor = g_inactiveCaptionTextColor;
+		}
+
+		HBRUSH brush = ::CreateSolidBrush(captionColor);
+		::FillRect(dc, &rc, brush);
+		::DeleteObject(brush);
+
+		int bkMode = ::SetBkMode(dc, TRANSPARENT);
+		COLORREF textColor = ::SetTextColor(dc, captionTextColor);
+		::DrawTextW(dc, text, ::lstrlenW(text), &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		::SetTextColor(dc, textColor);
+		::SetBkMode(dc, bkMode);
+	}
 }
 
 //---------------------------------------------------------------------
@@ -822,6 +852,27 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 					::DeleteObject(brush);
 				}
 
+				if (g_useTheme)
+				{
+					// ボーダーを描画する。
+
+					int partId = WP_BORDER;
+					int stateId = CS_INACTIVE;
+
+					int firstBorder = (g_layoutMode == LayoutMode::vertSplit) ? HotBorder::vertCenter : HotBorder::horzCenter;
+					for (int i = 0; i < 3; i++)
+					{
+						int border = firstBorder + i;
+						if (border == g_hotBorder) continue;
+						RECT rcBorder;
+						if (getBorderRect(&rcBorder, border))
+						{
+							// テーマ API を使用してボーダーを描画する。
+							::DrawThemeBackground(g_theme, dc, partId, stateId, &rcBorder, 0);
+						}
+					}
+				}
+				else
 				{
 					// ボーダーを描画する。
 
@@ -840,6 +891,21 @@ LRESULT CALLBACK singleWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 					::DeleteObject(brush);
 				}
 
+				if (g_useTheme)
+				{
+					// ホットボーダーを描画する。
+
+					int partId = WP_BORDER;
+					int stateId = CS_ACTIVE;
+
+					RECT rcHotBorder;
+					if (getBorderRect(&rcHotBorder, g_hotBorder))
+					{
+						// テーマ API を使用してボーダーを描画する。
+						::DrawThemeBackground(g_theme, dc, partId, stateId, &rcHotBorder, 0);
+					}
+				}
+				else
 				{
 					// ホットボーダーを描画する。
 
@@ -1113,7 +1179,7 @@ IMPLEMENT_HOOK_PROC_NULL(HWND, WINAPI, CreateWindowExA, (DWORD exStyle, LPCSTR c
 		MY_TRACE_HEX(true_SettingDialogProc);
 		MY_TRACE_HEX(&hook_SettingDialogProc);
 
-		DWORD exedit = g_auin.GetExedit();
+		DWORD exedit = g_auin.GetExEdit();
 
 		// rikky_memory.auf + rikky_module.dll 用のフック。
 		true_ScriptParamDlgProc = writeAbsoluteAddress(exedit + 0x3454 + 1, hook_ScriptParamDlgProc);
